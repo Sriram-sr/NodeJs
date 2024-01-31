@@ -30,7 +30,7 @@ export const signupValidator: ValidationChain[] = [
     .withMessage('Password should contain atleast one letter')
     .matches(/\d/g)
     .withMessage('Password should contain atleast one digit')
-    .matches(/[~!@#$%^&*()_-+=/]/g)
+    .matches(/[~!@#$%^&*()<>_+=/]/g)
     .withMessage('Password should contain atleast one special character'),
   body('role')
     .notEmpty()

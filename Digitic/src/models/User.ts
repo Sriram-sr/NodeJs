@@ -1,12 +1,12 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-interface UserProto extends Document {
+export interface UserProto extends Document {
   username: string;
   email: string;
   password: string;
   role: string;
-  resetToken: string;
-  resetTokenExpiry: Date;
+  resetToken?: string;
+  resetTokenExpiry?: Date;
 }
 
 const userSchema = new Schema<UserProto>(
