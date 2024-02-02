@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+nodemon.json
+tsconfig.json
+.env
+dist/
+.vscode/
