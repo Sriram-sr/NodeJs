@@ -6,16 +6,16 @@ import {
   errorHandler,
   HTTP_STATUS
 } from '../utils/error-handlers';
-import User, { UserProto } from '../models/User';
+import User, { UserDocument } from '../models/User';
 import { JWT_SECURE_KEY, JWT_EXPIRY_TIME } from '../utils/env-variables';
 
 // @route   /api/v1/auth/signup
 // @desc    Registers user
 // @access  Public
 export const signupUser: RequestHandler = (req, res, next) => {
-  //   checkValidationErrors(req);
+  checkValidationErrors(req);
   const serverErrorMsg = 'Something went wrong, could not signup currently';
-  const { email, username, password } = req.body as UserProto;
+  const { email, username, password } = req.body as UserDocument;
 
   User.findOne({ $or: [{ email: email }, { username: username }] })
     .then(existingUser => {

@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface UserProto extends Document {
+export interface UserDocument extends Document {
   username: string;
   email: string;
   password: string;
@@ -8,7 +8,7 @@ export interface UserProto extends Document {
   resetTokenExpiry?: Date;
 }
 
-const userSchema = new Schema<UserProto>(
+const userSchema = new Schema<UserDocument>(
   {
     username: {
       type: String,
@@ -31,4 +31,4 @@ const userSchema = new Schema<UserProto>(
   }
 );
 
-export default mongoose.model<UserProto>('User', userSchema);
+export default mongoose.model<UserDocument>('User', userSchema);
