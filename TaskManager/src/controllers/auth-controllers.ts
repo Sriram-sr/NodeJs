@@ -1,6 +1,7 @@
 import { RequestHandler } from 'express';
 import { hash, compare } from 'bcryptjs';
 import { sign } from 'jsonwebtoken';
+import { validationResult } from 'express-validator';
 import {
   checkValidationErrors,
   errorHandler,
@@ -13,7 +14,10 @@ import { JWT_SECURE_KEY, JWT_EXPIRY_TIME } from '../utils/env-variables';
 // @desc    Registers user
 // @access  Public
 export const signupUser: RequestHandler = (req, res, next) => {
-  checkValidationErrors(req);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    checkValidationErrors(next, errors.array());
+  }
   const serverErrorMsg = 'Something went wrong, could not signup currently';
   const { email, username, password } = req.body as UserDocument;
 
@@ -54,7 +58,10 @@ export const signupUser: RequestHandler = (req, res, next) => {
 // @desc    Logins user
 // @access  Public
 export const signinUser: RequestHandler = (req, res, next) => {
-  checkValidationErrors(req);
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    checkValidationErrors(next, errors.array());
+  }
   const serverErrorMsg = 'Something went wrong, could not signin currently';
   const { email, username, password } = req.body as {
     email?: string;

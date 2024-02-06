@@ -1,5 +1,5 @@
-import { NextFunction, Request } from 'express';
-import { validationResult } from 'express-validator';
+import { NextFunction } from 'express';
+import { ValidationError } from 'express-validator';
 
 export enum HTTP_STATUS {
   OK = 200,
@@ -37,14 +37,14 @@ export const errorHandler = (
   next(error);
 };
 
-export const checkValidationErrors = (req: Request) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new HttpError(
-      'Input field validation failure',
-      HTTP_STATUS.UNPROCESSABLE_ENTITY
-    );
-    error.data = errors.array();
-    throw error;
-  }
+export const checkValidationErrors = (
+  next: NextFunction,
+  errors: ValidationError[]
+) => {
+  const error = new HttpError(
+    'Input field validation failure',
+    HTTP_STATUS.UNPROCESSABLE_ENTITY
+  );
+  error.data = errors;
+  next(error);
 };

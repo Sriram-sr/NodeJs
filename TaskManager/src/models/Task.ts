@@ -36,6 +36,7 @@ const taskSchema = new Schema<TaskDocument>({
   status: {
     type: String,
     enum: ['completed', 'in-progress', 'unassigned'],
+    default: 'unasssigned',
     required: true
   },
   labels: [
