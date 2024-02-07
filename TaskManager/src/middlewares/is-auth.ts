@@ -3,7 +3,7 @@ import { verify } from 'jsonwebtoken';
 import { errorHandler, HTTP_STATUS } from '../utils/error-handlers';
 import { JWT_SECURE_KEY } from '../utils/env-variables';
 
-interface customReqBody extends Request {
+export interface customReqBody extends Request {
   email?: string;
   userId?: string;
 }

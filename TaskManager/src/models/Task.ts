@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import mongoose, { Document, Schema, Types, Model } from 'mongoose';
 import { LabelDocument } from './Label';
 import { UserDocument } from './User';
 
@@ -13,14 +13,22 @@ interface TaskDocument extends Document {
   description: string;
   status: string;
   labels: Array<LabelDocument>;
-  createdBy: Types.ObjectId;
-  assignedTo: Types.ObjectId;
+  createdBy: UserDocument;
+  assignedTo: UserDocument;
   createdDate: Date;
   dueDate: Date;
   completionDate: Date;
   lastUpdatedDate: string;
   comments: Array<Comment>;
   collaborators: Array<UserDocument>;
+  visibility: string;
+}
+
+interface TaskInput {
+  title: string;
+  description: string;
+  labels: Array<string>;
+  dueDate: Date;
   visibility: string;
 }
 
@@ -36,7 +44,7 @@ const taskSchema = new Schema<TaskDocument>({
   status: {
     type: String,
     enum: ['completed', 'in-progress', 'unassigned'],
-    default: 'unasssigned',
+    default: 'unassigned',
     required: true
   },
   labels: [
@@ -53,8 +61,7 @@ const taskSchema = new Schema<TaskDocument>({
   },
   assignedTo: {
     type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'User'
   },
   createdDate: {
     type: Date,
@@ -94,4 +101,9 @@ const taskSchema = new Schema<TaskDocument>({
   }
 });
 
-export default mongoose.model<TaskDocument>('Task', taskSchema);
+const Task: Model<TaskDocument> = mongoose.model<TaskDocument>(
+  'Task',
+  taskSchema
+);
+
+export { Task, TaskInput };
