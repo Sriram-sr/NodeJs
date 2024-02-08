@@ -60,8 +60,8 @@ export const createTask: RequestHandler = async (
     );
 };
 
-// @route    POST /api/v1/task/:taskId/private
-// @desc     Creates new task
+// @route    POST /api/v1/task/:taskId/assign
+// @desc     Assigns a new task
 // @access   Private
 export const assignTask: RequestHandler = (req: customReqBody, res, next) => {
   const errors = validationResult(req);
