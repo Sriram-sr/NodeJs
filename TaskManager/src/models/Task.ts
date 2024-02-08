@@ -8,7 +8,7 @@ interface Comment {
   date: Date;
 }
 
-interface TaskDocument extends Document {
+export interface TaskDocument extends Document {
   title: string;
   description: string;
   status: string;
@@ -43,7 +43,7 @@ const taskSchema = new Schema<TaskDocument>({
   },
   status: {
     type: String,
-    enum: ['completed', 'in-progress', 'unassigned'],
+    enum: ['completed', 'in-progress', 'unassigned', 'assigned'],
     default: 'unassigned',
     required: true
   },

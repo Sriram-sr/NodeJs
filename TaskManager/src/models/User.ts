@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { TaskDocument } from './Task';
 
 export interface UserDocument extends Document {
   username: string;
@@ -6,6 +7,7 @@ export interface UserDocument extends Document {
   password: string;
   resetToken?: string;
   resetTokenExpiry?: Date;
+  assignedTasks: Array<TaskDocument>;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -24,7 +26,14 @@ const userSchema = new Schema<UserDocument>(
       required: true
     },
     resetToken: String,
-    resetTokenExpiry: Date
+    resetTokenExpiry: Date,
+    assignedTasks: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Task',
+        required: true
+      }
+    ]
   },
   {
     timestamps: true
