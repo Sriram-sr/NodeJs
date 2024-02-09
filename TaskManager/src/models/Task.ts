@@ -14,7 +14,7 @@ export interface TaskDocument extends Document {
   status: string;
   labels: Array<LabelDocument>;
   createdBy: UserDocument;
-  assignedTo: UserDocument;
+  assignedTo: UserDocument | null;
   createdDate: Date;
   dueDate: Date;
   completionDate: Date;

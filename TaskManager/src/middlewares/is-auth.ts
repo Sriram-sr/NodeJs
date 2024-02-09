@@ -2,10 +2,15 @@ import { Request, RequestHandler } from 'express';
 import { verify } from 'jsonwebtoken';
 import { errorHandler, HTTP_STATUS } from '../utils/error-handlers';
 import { JWT_SECURE_KEY } from '../utils/env-variables';
+import { TaskDocument } from '../models/Task';
+import { UserDocument } from '../models/User';
 
 export interface customReqBody extends Request {
   email?: string;
   userId?: string;
+  task?: TaskDocument;
+  user?: UserDocument;
+  taskId?: string;
 }
 
 const isAuthenticated: RequestHandler = (req: customReqBody, _, next) => {

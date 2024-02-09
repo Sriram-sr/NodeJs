@@ -1,21 +1,24 @@
 import { Router } from 'express';
 import isAuth from '../middlewares/is-auth';
 import { createTaskValidator } from '../validators/task-validators';
-import { createTask, assignTask } from '../controllers/task-controllers';
-import { param, body } from 'express-validator';
+import {
+  validateTaskId,
+  validateUserId
+} from '../middlewares/task-middlewares';
+import {
+  createTask,
+  assignTask,
+  unassignTask
+} from '../controllers/task-controllers';
 
 const router = Router();
 
-const validateMongoId = [
-  param('taskId').isMongoId().withMessage('Task Id is invalid Mongo Id'),
-  body('userId')
-    .notEmpty()
-    .withMessage('User Id is required')
-    .isMongoId()
-    .withMessage('User Id is invalid Mongo Id')
-];
-
 router.route('/').post(isAuth, createTaskValidator, createTask);
-router.route('/:taskId/assign').post(isAuth, validateMongoId, assignTask);
+router
+  .route('/:taskId/assign')
+  .post(isAuth, validateTaskId, validateUserId, assignTask);
+router
+  .route('/:taskId/unassign')
+  .delete(isAuth, validateTaskId, validateUserId, unassignTask);
 
 export default router;
