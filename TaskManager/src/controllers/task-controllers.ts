@@ -60,17 +60,68 @@ export const createTask: RequestHandler = async (
 };
 
 // @route    POST /api/v1/task/:taskId
-// @desc     Gets a task
+// @desc     Gets task details
 // @access   Private
-export const getTaskDetails: RequestHandler = (req, res, next) => {
+export const getTaskDetails: RequestHandler = (
+  req: customReqBody,
+  res,
+  next
+) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return checkValidationErrors(next, errors.array());
   }
   const { taskId } = req.params as { taskId: string };
 
-  Task.findById(taskId);
-}
+  Task.findById(taskId)
+    .populate({
+      path: 'labels',
+      select: 'labelName -_id'
+    })
+    .populate({
+      path: 'createdBy assignedTo collaborators',
+      select: 'username'
+    })
+    .populate({
+      path: 'comments',
+      select: 'text commentedBy date',
+      populate: {
+        path: 'commentedBy',
+        select: 'username -_id'
+      }
+    })
+    .then(task => {
+      const colloboratorIds = task?.collaborators.map(collaborator =>
+        collaborator._id.toString()
+      );
+
+      if (task?.visibility === 'private') {
+        if (
+          !colloboratorIds?.includes(req.userId as any) &&
+          task.createdBy._id.toString() !== req.userId &&
+          task.assignedTo?._id.toString() !== req.userId
+        ) {
+          return errorHandler(
+            'Private tasks can only be viewed by collaborators/creators of the task',
+            HTTP_STATUS.FORBIDDEN,
+            next
+          );
+        }
+      }
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Successfully fetched task',
+        task
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not assign task currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
 
 // @route    POST /api/v1/task/:taskId/assign
 // @desc     Assigns a new task
@@ -296,7 +347,7 @@ export const removeCollaboratorFromTask: RequestHandler = (
       return req.task?.save();
     })
     .then(modifiedTask => {
-      res.status(200).json({
+      res.status(HTTP_STATUS.OK).json({
         message: 'Successfully removed user as a collaborator',
         modifiedTask
       });
@@ -304,6 +355,57 @@ export const removeCollaboratorFromTask: RequestHandler = (
     .catch(err =>
       errorHandler(
         'Something went wrong, could not remove collaboration currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
+
+// @route    DELETE /api/v1/task/:taskId/comment
+// @desc     Comments on a task.
+// @access   Private
+export const commentOnTask: RequestHandler = (
+  req: customReqBody,
+  res,
+  next
+) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return checkValidationErrors(next, errors.array());
+  }
+  const { text: commentText } = req.body as { text: string };
+
+  if (req.task?.visibility === 'private') {
+    if (
+      !req.task?.collaborators.includes(req.userId as any) &&
+      req.task?.assignedTo?._id.toString() !== req.userId &&
+      req.task.createdBy._id.toString() !== req.userId
+    ) {
+      return errorHandler(
+        'User should not comment on private task unless collaborator/creator',
+        HTTP_STATUS.FORBIDDEN,
+        next
+      );
+    }
+  }
+
+  req.task?.comments.unshift({
+    text: commentText,
+    commentedBy: req.userId as any,
+    date: new Date()
+  });
+  req.task
+    ?.save()
+    .then(task => {
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Sucessfully commented on the task',
+        task
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not comment currently',
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
         next,
         err

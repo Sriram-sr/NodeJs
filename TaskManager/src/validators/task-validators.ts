@@ -48,3 +48,11 @@ export const createTaskValidator: ValidationChain[] = [
     .isIn(['public', 'private'])
     .withMessage('Visibility should be one of public/private')
 ];
+
+export const commentOnTaskValidator: ValidationChain[] = [
+  body('text')
+    .notEmpty()
+    .withMessage('Comment text is required')
+    .isLength({ max: 500 })
+    .withMessage('Comment text length should not exceed 500 characters')
+];

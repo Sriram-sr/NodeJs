@@ -1,10 +1,10 @@
-import mongoose, { Document, Schema, Types, Model } from 'mongoose';
+import mongoose, { Document, Schema, Model } from 'mongoose';
 import { LabelDocument } from './Label';
 import { UserDocument } from './User';
 
 interface Comment {
   text: string;
-  commentedBy: Types.ObjectId;
+  commentedBy: UserDocument;
   date: Date;
 }
 

@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { param } from 'express-validator';
 import isAuth from '../middlewares/is-auth';
-import { createTaskValidator } from '../validators/task-validators';
+import {
+  createTaskValidator,
+  commentOnTaskValidator
+} from '../validators/task-validators';
 import {
   validateTaskId,
   validateUserId
@@ -12,7 +15,8 @@ import {
   assignTask,
   unassignTask,
   collaborateTask,
-  removeCollaboratorFromTask
+  removeCollaboratorFromTask,
+  commentOnTask
 } from '../controllers/task-controllers';
 
 const router = Router();
@@ -37,4 +41,8 @@ router
 router
   .route('/:taskId/collaborator')
   .delete(isAuth, validateTaskId, validateUserId, removeCollaboratorFromTask);
+router
+  .route('/:taskId/comment')
+  .post(isAuth, validateTaskId, commentOnTaskValidator, commentOnTask);
+
 export default router;
