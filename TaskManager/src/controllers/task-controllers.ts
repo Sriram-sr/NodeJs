@@ -59,6 +59,19 @@ export const createTask: RequestHandler = async (
     );
 };
 
+// @route    POST /api/v1/task/:taskId
+// @desc     Gets a task
+// @access   Private
+export const getTaskDetails: RequestHandler = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return checkValidationErrors(next, errors.array());
+  }
+  const { taskId } = req.params as { taskId: string };
+
+  Task.findById(taskId);
+}
+
 // @route    POST /api/v1/task/:taskId/assign
 // @desc     Assigns a new task
 // @access   Private
@@ -175,6 +188,122 @@ export const unassignTask: RequestHandler = (req: customReqBody, res, next) => {
     .catch(err =>
       errorHandler(
         'Something went wrong, could not unassign task currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
+
+// @route    POST /api/v1/task/:taskId/collaborator
+// @desc     Add user as a collaborator for a task.
+// @access   Private
+export const collaborateTask: RequestHandler = (
+  req: customReqBody,
+  res,
+  next
+) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return checkValidationErrors(next, errors.array());
+  }
+  const { userId } = req.body as { userId: string };
+  const { taskId } = req.params as { taskId: string };
+
+  const existingUser = req.task?.collaborators.find(
+    user => user._id.toString() === userId
+  );
+
+  const existingTask = req.user?.collaboratingTasks.find(
+    task => task._id.toString() === taskId
+  );
+
+  if (existingTask || existingUser) {
+    return errorHandler(
+      'User is already collaborating to this task',
+      HTTP_STATUS.BAD_REQUEST,
+      next
+    );
+  }
+
+  if (req.task?.assignedTo?._id.toString() === userId) {
+    return errorHandler(
+      'User is already collaborating this task as he is assignee',
+      HTTP_STATUS.BAD_REQUEST,
+      next
+    );
+  }
+
+  req.user?.collaboratingTasks.unshift(req.task?._id);
+  req.user
+    ?.save()
+    .then(() => {
+      req.task?.collaborators.unshift(req.user?._id);
+      return req.task?.save();
+    })
+    .then(collaboratedtask => {
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Successfull collaboration to the task',
+        collaboratedtask
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not collaborate to task currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
+
+// @route    DELETE /api/v1/task/:taskId/collaborator
+// @desc     Removes collaborator from a task.
+// @access   Private
+export const removeCollaboratorFromTask: RequestHandler = (
+  req: customReqBody,
+  res,
+  next
+) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return checkValidationErrors(next, errors.array());
+  }
+  const { userId } = req.body as { userId: string };
+  const { taskId } = req.params as { taskId: string };
+
+  const userIdx = req.task?.collaborators.findIndex(
+    user => user._id.toString() === userId
+  );
+
+  const taskIdx = req.user?.collaboratingTasks.findIndex(
+    task => task._id.toString() === taskId
+  );
+
+  if (!(userIdx! >= 0) || !(taskIdx! >= 0)) {
+    return errorHandler(
+      'User is not a collaborator to remove from collaboration',
+      HTTP_STATUS.BAD_REQUEST,
+      next
+    );
+  }
+
+  req.user?.collaboratingTasks.splice(taskIdx!, 1);
+  req.user
+    ?.save()
+    .then(() => {
+      req.task?.collaborators.splice(userIdx!, 1);
+      return req.task?.save();
+    })
+    .then(modifiedTask => {
+      res.status(200).json({
+        message: 'Successfully removed user as a collaborator',
+        modifiedTask
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not remove collaboration currently',
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
         next,
         err

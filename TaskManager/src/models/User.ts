@@ -8,6 +8,7 @@ export interface UserDocument extends Document {
   resetToken?: string;
   resetTokenExpiry?: Date;
   assignedTasks: Array<TaskDocument>;
+  collaboratingTasks: Array<TaskDocument>;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -28,6 +29,13 @@ const userSchema = new Schema<UserDocument>(
     resetToken: String,
     resetTokenExpiry: Date,
     assignedTasks: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Task',
+        required: true
+      }
+    ],
+    collaboratingTasks: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Task',

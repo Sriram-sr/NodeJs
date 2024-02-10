@@ -23,6 +23,9 @@ export const validateUserId = body('userId')
   .isMongoId()
   .withMessage('User Id is invalid Mongo Id')
   .custom(async (value, { req }) => {
+    if (!validationResult(req).isEmpty()) {
+      return;
+    }
     const user = await User.findById(value);
     if (!user) {
       throw new Error('User not found with given user Id');
