@@ -17,11 +17,7 @@ const getLabelIds = async (labels: string[]): Promise<LabelDocument[]> => {
 // @route    POST /api/v1/task/
 // @desc     Creates new task
 // @access   Private
-export const createTask: RequestHandler = async (
-  req: customReqBody,
-  res,
-  next
-) => {
+const createTask: RequestHandler = async (req: customReqBody, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return checkValidationErrors(next, errors.array());
@@ -62,11 +58,7 @@ export const createTask: RequestHandler = async (
 // @route    POST /api/v1/task/:taskId
 // @desc     Gets task details
 // @access   Private
-export const getTaskDetails: RequestHandler = (
-  req: customReqBody,
-  res,
-  next
-) => {
+const getTaskDetails: RequestHandler = (req: customReqBody, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return checkValidationErrors(next, errors.array());
@@ -126,7 +118,7 @@ export const getTaskDetails: RequestHandler = (
 // @route    POST /api/v1/task/:taskId/assign
 // @desc     Assigns a new task
 // @access   Private
-export const assignTask: RequestHandler = (req: customReqBody, res, next) => {
+const assignTask: RequestHandler = (req: customReqBody, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return checkValidationErrors(next, errors.array());
@@ -187,7 +179,7 @@ export const assignTask: RequestHandler = (req: customReqBody, res, next) => {
 // @route    DELETE /api/v1/task/:taskId/unassign
 // @desc     Unassigns a new task
 // @access   Private
-export const unassignTask: RequestHandler = (req: customReqBody, res, next) => {
+const unassignTask: RequestHandler = (req: customReqBody, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return checkValidationErrors(next, errors.array());
@@ -249,11 +241,7 @@ export const unassignTask: RequestHandler = (req: customReqBody, res, next) => {
 // @route    POST /api/v1/task/:taskId/collaborator
 // @desc     Add user as a collaborator for a task.
 // @access   Private
-export const collaborateTask: RequestHandler = (
-  req: customReqBody,
-  res,
-  next
-) => {
+const collaborateTask: RequestHandler = (req: customReqBody, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return checkValidationErrors(next, errors.array());
@@ -311,7 +299,7 @@ export const collaborateTask: RequestHandler = (
 // @route    DELETE /api/v1/task/:taskId/collaborator
 // @desc     Removes collaborator from a task.
 // @access   Private
-export const removeCollaboratorFromTask: RequestHandler = (
+const removeCollaboratorFromTask: RequestHandler = (
   req: customReqBody,
   res,
   next
@@ -365,11 +353,7 @@ export const removeCollaboratorFromTask: RequestHandler = (
 // @route    DELETE /api/v1/task/:taskId/comment
 // @desc     Comments on a task.
 // @access   Private
-export const commentOnTask: RequestHandler = (
-  req: customReqBody,
-  res,
-  next
-) => {
+const commentOnTask: RequestHandler = (req: customReqBody, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return checkValidationErrors(next, errors.array());
@@ -411,4 +395,94 @@ export const commentOnTask: RequestHandler = (
         err
       )
     );
+};
+
+// @route    PATCH /api/v1/task/:taskId/label/:labeId
+// @desc     Adds a label to task.
+// @access   Private
+const addLabelToTask: RequestHandler = (req: customReqBody, res, next) => {
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
+  }
+  const { labelId } = req.params as { labelId: string; taskId: string };
+
+  const existingLabel = req.task?.labels.find(
+    label => label._id.toString() === labelId
+  );
+  if (existingLabel) {
+    return errorHandler(
+      'Label already exists in the task',
+      HTTP_STATUS.CONFLICT,
+      next
+    );
+  }
+  req.task?.labels.push(req.label?._id);
+  req.task
+    ?.save()
+    .then(task => {
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Successfully added label to the task',
+        task
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not add label currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
+
+// @route    DELETE /api/v1/task/:taskId/label/:labeId
+// @desc     Remove a label from task.
+// @access   Private
+const removeLabelFromTask: RequestHandler = (req: customReqBody, res, next) => {
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
+  }
+  const { labelId } = req.params as { labelId: string; taskId: string };
+
+  const existingLabelIdx = req.task?.labels.findIndex(
+    label => label._id.toString() === labelId
+  );
+  if (!(existingLabelIdx! >= 0)) {
+    return errorHandler(
+      'Label not present in the task to remove',
+      HTTP_STATUS.BAD_REQUEST,
+      next
+    );
+  }
+  req.task?.labels.splice(existingLabelIdx!, 1);
+  req.task
+    ?.save()
+    .then(task => {
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Successfully removed label from the task',
+        task
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not remove label currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
+
+export {
+  getTaskDetails,
+  createTask,
+  assignTask,
+  unassignTask,
+  collaborateTask,
+  removeCollaboratorFromTask,
+  commentOnTask,
+  addLabelToTask,
+  removeLabelFromTask
 };

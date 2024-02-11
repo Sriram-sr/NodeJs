@@ -4,6 +4,7 @@ import { errorHandler, HTTP_STATUS } from '../utils/error-handlers';
 import { JWT_SECURE_KEY } from '../utils/env-variables';
 import { TaskDocument } from '../models/Task';
 import { UserDocument } from '../models/User';
+import { LabelDocument } from '../models/Label';
 
 export interface customReqBody extends Request {
   email?: string;
@@ -11,6 +12,7 @@ export interface customReqBody extends Request {
   task?: TaskDocument;
   user?: UserDocument;
   taskId?: string;
+  label?: LabelDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: customReqBody, _, next) => {

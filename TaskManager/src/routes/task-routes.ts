@@ -7,7 +7,8 @@ import {
 } from '../validators/task-validators';
 import {
   validateTaskId,
-  validateUserId
+  validateUserId,
+  validateLabelId
 } from '../middlewares/task-middlewares';
 import {
   getTaskDetails,
@@ -16,7 +17,9 @@ import {
   unassignTask,
   collaborateTask,
   removeCollaboratorFromTask,
-  commentOnTask
+  commentOnTask,
+  addLabelToTask,
+  removeLabelFromTask
 } from '../controllers/task-controllers';
 
 const router = Router();
@@ -44,5 +47,9 @@ router
 router
   .route('/:taskId/comment')
   .post(isAuth, validateTaskId, commentOnTaskValidator, commentOnTask);
+router
+  .route('/:taskId/label/:labelId')
+  .patch(isAuth, validateLabelId, validateTaskId, addLabelToTask)
+  .delete(isAuth, validateLabelId, validateTaskId, removeLabelFromTask);
 
 export default router;
