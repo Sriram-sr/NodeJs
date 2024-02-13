@@ -8,7 +8,7 @@ interface Comment {
   date: Date;
 }
 
-export interface TaskDocument extends Document {
+interface TaskDocument extends Document {
   title: string;
   description: string;
   status: string;
@@ -32,6 +32,8 @@ interface TaskInput {
   visibility: string;
 }
 
+const taskStatus = ['completed', 'in-progress', 'unassigned', 'assigned'];
+
 const taskSchema = new Schema<TaskDocument>({
   title: {
     type: String,
@@ -43,7 +45,7 @@ const taskSchema = new Schema<TaskDocument>({
   },
   status: {
     type: String,
-    enum: ['completed', 'in-progress', 'unassigned', 'assigned'],
+    enum: taskStatus,
     default: 'unassigned',
     required: true
   },
@@ -106,4 +108,4 @@ const Task: Model<TaskDocument> = mongoose.model<TaskDocument>(
   taskSchema
 );
 
-export { Task, TaskInput };
+export { TaskDocument, taskStatus, Task, TaskInput };

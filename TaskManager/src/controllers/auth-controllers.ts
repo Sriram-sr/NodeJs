@@ -16,7 +16,7 @@ import { JWT_SECURE_KEY, JWT_EXPIRY_TIME } from '../utils/env-variables';
 export const signupUser: RequestHandler = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    checkValidationErrors(next, errors.array());
+    return checkValidationErrors(next, errors.array());
   }
   const serverErrorMsg = 'Something went wrong, could not signup currently';
   const { email, username, password } = req.body as UserDocument;

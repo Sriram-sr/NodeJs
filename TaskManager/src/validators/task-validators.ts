@@ -1,17 +1,5 @@
 import { ValidationChain, body } from 'express-validator';
-import Label from '../models/Label';
-
-const validateLabels = async (labels: string[]) => {
-  const existingLabels = await Label.find({ labelName: { $in: labels } });
-  if (existingLabels.length !== labels.length) {
-    const invalidLabels = labels.filter(
-      label =>
-        !existingLabels.some(existingLabel => existingLabel.labelName === label)
-    );
-    return [false, `Invalid labels found ${invalidLabels.join(', ')}`];
-  }
-  return [true, ''];
-};
+import { validateLabels } from '../middlewares/task-middlewares';
 
 export const createTaskValidator: ValidationChain[] = [
   body('title')

@@ -8,11 +8,14 @@ import {
 import {
   validateTaskId,
   validateUserId,
-  validateLabelId
+  validateLabelId,
+  validateTaskStatus
 } from '../middlewares/task-middlewares';
 import {
+  getTasks,
   getTaskDetails,
   createTask,
+  updateTaskStatus,
   assignTask,
   unassignTask,
   collaborateTask,
@@ -24,6 +27,7 @@ import {
 
 const router = Router();
 
+router.route('/').get(getTasks).post(isAuth, createTaskValidator, createTask);
 router
   .route('/:taskId')
   .get(
@@ -31,7 +35,6 @@ router
     isAuth,
     getTaskDetails
   );
-router.route('/').post(isAuth, createTaskValidator, createTask);
 router
   .route('/:taskId/assign')
   .post(isAuth, validateTaskId, validateUserId, assignTask);
@@ -51,5 +54,8 @@ router
   .route('/:taskId/label/:labelId')
   .patch(isAuth, validateLabelId, validateTaskId, addLabelToTask)
   .delete(isAuth, validateLabelId, validateTaskId, removeLabelFromTask);
+router
+  .route('/status/:taskId')
+  .patch(isAuth, validateTaskStatus, validateTaskId, updateTaskStatus);
 
 export default router;

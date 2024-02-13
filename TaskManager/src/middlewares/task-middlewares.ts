@@ -1,7 +1,19 @@
 import { param, body, validationResult } from 'express-validator';
-import { Task } from '../models/Task';
+import { Task, taskStatus } from '../models/Task';
 import User from '../models/User';
 import Label from '../models/Label';
+
+export const validateLabels = async (labels: string[]) => {
+  const existingLabels = await Label.find({ labelName: { $in: labels } });
+  if (existingLabels.length !== labels.length) {
+    const invalidLabels = labels.filter(
+      label =>
+        !existingLabels.some(existingLabel => existingLabel.labelName === label)
+    );
+    return [false, `Invalid labels found ${invalidLabels.join(', ')}`];
+  }
+  return [true, ''];
+};
 
 export const validateTaskId = param('taskId')
   .isMongoId()
@@ -44,3 +56,9 @@ export const validateLabelId = param('labelId')
     }
     req.label = label;
   });
+
+export const validateTaskStatus = body('status')
+  .notEmpty()
+  .withMessage('Status is required')
+  .isIn(taskStatus)
+  .withMessage('Enter a valid task status');

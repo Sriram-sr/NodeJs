@@ -14,6 +14,61 @@ const getLabelIds = async (labels: string[]): Promise<LabelDocument[]> => {
   return labelDocuments.map(label => label._id);
 };
 
+interface getTaskFilters {
+  page: string;
+  createdBy: string;
+  assignedTo: string;
+  createdBefore: Date;
+  createdAfter: Date;
+}
+
+// @route    GET /api/v1/task/
+// @desc     Gets all tasks
+// @access   Public
+const getTasks: RequestHandler = (req, res, next) => {
+  const { page, createdBy, assignedTo, createdBefore, createdAfter } =
+    req.query as Partial<getTaskFilters>;
+  const currentpage = page ?? 1;
+  const perPage = 10;
+  let filters: Record<string, any> = {};
+
+  if (createdBy) {
+    filters = { createdBy: createdBy };
+  }
+
+  if (assignedTo) {
+    filters = { ...filters, assignedTo: assignedTo };
+  }
+
+  if (createdAfter) {
+    filters = { ...filters, createdDate: { $gt: new Date(createdAfter) } };
+  }
+  if (createdBefore) {
+    filters = {
+      ...filters,
+      createdDate: { ...filters.createdDate, $lt: new Date(createdBefore) }
+    };
+  }
+
+  Task.find(filters)
+    .skip((+currentpage - 1) * perPage)
+    .limit(perPage)
+    .then(tasks => {
+      res.status(HTTP_STATUS.OK).json({
+        message: 'Sucessfully fetched tasks',
+        tasks
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not get tasks currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
+
 // @route    POST /api/v1/task/
 // @desc     Creates new task
 // @access   Private
@@ -108,6 +163,69 @@ const getTaskDetails: RequestHandler = (req: customReqBody, res, next) => {
     .catch(err =>
       errorHandler(
         'Something went wrong, could not assign task currently',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        next,
+        err
+      )
+    );
+};
+
+// @route    PATCH /api/v1/task/status/:taskId
+// @desc     Updates task status
+// @access   Private
+const updateTaskStatus: RequestHandler = (req: customReqBody, res, next) => {
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
+  }
+  const { status } = req.body as { status: string };
+
+  if (status === req.task?.status) {
+    return errorHandler(
+      `Task is already in ${status} state`,
+      HTTP_STATUS.BAD_REQUEST,
+      next
+    );
+  }
+
+  if (status === 'assigned') {
+    return errorHandler(
+      'Cannot change task state to assigned without assigning a user',
+      HTTP_STATUS.BAD_REQUEST,
+      next
+    );
+  }
+
+  if (
+    status === 'unassigned' &&
+    req.task?.assignedTo?._id.toString() !== req.userId
+  ) {
+    return errorHandler(
+      'Cannot unassign a task assigned to other user',
+      HTTP_STATUS.FORBIDDEN,
+      next
+    );
+  }
+
+  if (req.task) {
+    if (status === 'unassigned') {
+      req.task.status = status;
+      req.task.assignedTo = null;
+    } else {
+      req.task.status = status;
+    }
+  }
+  req.task
+    ?.save()
+    .then(updatedTask => {
+      res.status(HTTP_STATUS.OK).json({
+        message: `Successfully changed task status to ${status}`,
+        updatedTask
+      });
+    })
+    .catch(err =>
+      errorHandler(
+        'Something went wrong, could not change status of task currently',
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
         next,
         err
@@ -476,8 +594,10 @@ const removeLabelFromTask: RequestHandler = (req: customReqBody, res, next) => {
 };
 
 export {
+  getTasks,
   getTaskDetails,
   createTask,
+  updateTaskStatus,
   assignTask,
   unassignTask,
   collaborateTask,
