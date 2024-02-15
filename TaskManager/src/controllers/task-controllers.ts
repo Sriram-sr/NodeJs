@@ -73,9 +73,9 @@ const getTasks: RequestHandler = (req, res, next) => {
 // @desc     Creates new task
 // @access   Private
 const createTask: RequestHandler = async (req: customReqBody, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
   const { title, description, dueDate, labels, visibility } =
     req.body as TaskInput;
@@ -114,9 +114,9 @@ const createTask: RequestHandler = async (req: customReqBody, res, next) => {
 // @desc     Gets task details
 // @access   Private
 const getTaskDetails: RequestHandler = (req: customReqBody, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
   const { taskId } = req.params as { taskId: string };
 
@@ -237,9 +237,9 @@ const updateTaskStatus: RequestHandler = (req: customReqBody, res, next) => {
 // @desc     Assigns a new task
 // @access   Private
 const assignTask: RequestHandler = (req: customReqBody, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
 
   if (req.task?.status === 'assigned') {
@@ -298,9 +298,9 @@ const assignTask: RequestHandler = (req: customReqBody, res, next) => {
 // @desc     Unassigns a new task
 // @access   Private
 const unassignTask: RequestHandler = (req: customReqBody, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
 
   if (req.userId !== req.task?.createdBy._id.toString()) {
@@ -360,9 +360,9 @@ const unassignTask: RequestHandler = (req: customReqBody, res, next) => {
 // @desc     Add user as a collaborator for a task.
 // @access   Private
 const collaborateTask: RequestHandler = (req: customReqBody, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
   const { userId } = req.body as { userId: string };
   const { taskId } = req.params as { taskId: string };
@@ -422,9 +422,9 @@ const removeCollaboratorFromTask: RequestHandler = (
   res,
   next
 ) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
   const { userId } = req.body as { userId: string };
   const { taskId } = req.params as { taskId: string };
@@ -472,9 +472,9 @@ const removeCollaboratorFromTask: RequestHandler = (
 // @desc     Comments on a task.
 // @access   Private
 const commentOnTask: RequestHandler = (req: customReqBody, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
   const { text: commentText } = req.body as { text: string };
 

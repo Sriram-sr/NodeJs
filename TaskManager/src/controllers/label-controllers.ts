@@ -33,9 +33,9 @@ export const getLabels: RequestHandler = (_, res, next) => {
 // @access   Public
 export const getSingleLabel: RequestHandler = (req, res, next) => {
   const { labelId } = req.params as { labelId: string };
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    checkValidationErrors(next, validationErrors.array());
   }
 
   Label.findById(labelId)
@@ -86,9 +86,9 @@ export const createLabel: RequestHandler = (req, res, next) => {
 // @access   Public
 export const updateLabel: RequestHandler = (req, res, next) => {
   const { labelId } = req.params as { labelId: string };
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    checkValidationErrors(next, validationErrors.array());
   }
 
   Label.findByIdAndUpdate(labelId, req.body, { new: true })
@@ -113,9 +113,9 @@ export const updateLabel: RequestHandler = (req, res, next) => {
 // @access   Public
 export const deleteLabel: RequestHandler = (req, res, next) => {
   const { labelId } = req.params as { labelId: string };
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    checkValidationErrors(next, validationErrors.array());
   }
 
   Label.findById(labelId)

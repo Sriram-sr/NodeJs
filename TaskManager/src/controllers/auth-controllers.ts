@@ -10,13 +10,13 @@ import {
 import User, { UserDocument } from '../models/User';
 import { JWT_SECURE_KEY, JWT_EXPIRY_TIME } from '../utils/env-variables';
 
-// @route   /api/v1/auth/signup
+// @route   /api/v1/auth/signup/
 // @desc    Registers user
 // @access  Public
 export const signupUser: RequestHandler = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    return checkValidationErrors(next, validationErrors.array());
   }
   const serverErrorMsg = 'Something went wrong, could not signup currently';
   const { email, username, password } = req.body as UserDocument;
@@ -58,9 +58,9 @@ export const signupUser: RequestHandler = (req, res, next) => {
 // @desc    Logins user
 // @access  Public
 export const signinUser: RequestHandler = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    checkValidationErrors(next, errors.array());
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    checkValidationErrors(next, validationErrors.array());
   }
   const serverErrorMsg = 'Something went wrong, could not signin currently';
   const { email, username, password } = req.body as {
