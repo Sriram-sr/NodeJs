@@ -31,8 +31,12 @@ export enum HttpStatus {
 export const errorHandler = (
   message: string,
   errorCode: number,
-  next: NextFunction
+  next: NextFunction,
+  err?: unknown
 ) => {
+  if (err) {
+    console.log(err);
+  }
   const error = new HttpError(message, errorCode);
   next(error);
 };

@@ -37,7 +37,8 @@ export const signupUser: RequestHandler = async (req, res, next) => {
     errorHandler(
       'Something went wrong, could not signup currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
-      next
+      next,
+      err
     );
   }
 };
@@ -87,7 +88,8 @@ export const signinUser: RequestHandler = async (req, res, next) => {
     errorHandler(
       'Something went wrong, could not signin currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
-      next
+      next,
+      err
     );
   }
 };
