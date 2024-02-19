@@ -3,6 +3,7 @@ import { UserDocument } from './User';
 import { Comment, PullRequestDocument } from './PullRequest';
 
 export interface IssueDocument extends Document {
+  issueId: number;
   title: string;
   description: string;
   status: string;
@@ -15,8 +16,19 @@ export interface IssueDocument extends Document {
   comments: Array<Comment>;
 }
 
+export interface IssueInput {
+  title: string;
+  description: string;
+  labels?: string[];
+  assignees?: string[];
+}
+
 const issueSchema = new Schema<IssueDocument>(
   {
+    issueId: {
+      type: Number,
+      required: true
+    },
     title: {
       type: String,
       required: true
@@ -27,6 +39,7 @@ const issueSchema = new Schema<IssueDocument>(
     },
     status: {
       type: String,
+      enum: ['open', 'closed'],
       required: true
     },
     createdBy: {

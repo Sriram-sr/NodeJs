@@ -2,6 +2,20 @@ import { ValidationChain, body } from 'express-validator';
 import User from '../models/User';
 import Label from '../models/Label';
 
+const filterValidUsers = async (users: string[]) => {
+  const invalidUsernames = [];
+  const existingUsers = await User.find({ username: { $in: users } });
+  if (existingUsers.length !== users.length) {
+    const existingUsernames = existingUsers.map(user => user.username);
+    for (const user of users) {
+      if (!existingUsernames.includes(user)) {
+        invalidUsernames.push(user);
+      }
+    }
+  }
+  return [existingUsers, invalidUsernames];
+};
+
 export const createLabelValidator: ValidationChain[] = [
   body('labelName')
     .notEmpty()
@@ -20,23 +34,51 @@ export const createLabelValidator: ValidationChain[] = [
     .isLength({ min: 6, max: 40 })
     .withMessage('Description should not exceed 6 to 40 characters'),
   body('reviewers')
+    .optional()
     .isArray()
     .withMessage('reviewers should be an array')
-    .custom(async (reviewers: string[], { req }) => {
-      const existingUsers = await User.find({ username: { $in: reviewers } });
-      if (existingUsers.length !== reviewers.length) {
-        const existingUsernames = existingUsers.map(user => user.username);
-        const invalidUsernames = [];
-        for (const user of reviewers) {
-          if (!existingUsernames.includes(user)) {
-            invalidUsernames.push(user);
-          }
-        }
+    .custom(async (values: string[], { req }) => {
+      const [reviewers, invalidReviewers] = await filterValidUsers(values);
+      if (invalidReviewers.length > 0) {
         throw new Error(
-          `Invalid reviewers found ${invalidUsernames.join(', ')}`
+          `Invalid reviewers found ${invalidReviewers.join(', ')}`
         );
       }
+      req.reviewers = reviewers;
+      // TODO: Correct this change in createLabel controller
+    })
+];
 
-      req.reviewerIds = existingUsers.map(user => user._id);
+export const createIssueValidator: ValidationChain[] = [
+  body('title')
+    .notEmpty()
+    .withMessage('Title is required')
+    .isLength({ max: 100 })
+    .withMessage('Title should not exceed 100 characters'),
+  body('description')
+    .notEmpty()
+    .withMessage('Description is required')
+    .isLength({ max: 1000 })
+    .withMessage('Description should not exceed 1000 characters'),
+  body('labels')
+    .optional()
+    .isArray()
+    .withMessage('Labels should be an array')
+    .custom(async (values: string[], { req }) => {
+      const labels = await Label.find({ labelName: { $in: values } });
+      req.labelIds = labels.map(label => label._id);
+    }),
+  body('assignees')
+    .optional()
+    .isArray()
+    .withMessage('Assignees should be an array')
+    .custom(async (values: string[], { req }) => {
+      const [assignees, invalidAssignees] = await filterValidUsers(values);
+      if (invalidAssignees.length > 0) {
+        throw new Error(
+          `Invalid assignees found ${invalidAssignees.join(', ')}`
+        );
+      }
+      req.assigneeIds = assignees;
     })
 ];

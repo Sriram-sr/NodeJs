@@ -74,7 +74,11 @@ export const signinUser: RequestHandler = async (req, res, next) => {
       );
     }
     const token = sign(
-      { email: user.email, userId: user._id.toString() },
+      {
+        email: user.email,
+        username: user.username,
+        userId: user._id.toString()
+      },
       JWTSECUREKEY,
       { expiresIn: JWT_EXPIRY_TIME }
     );

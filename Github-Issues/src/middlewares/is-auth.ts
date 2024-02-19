@@ -3,11 +3,15 @@ import { verify } from 'jsonwebtoken';
 import { HttpStatus, errorHandler } from '../utils/error-handlers';
 import { JWTSECUREKEY } from '../utils/env-variables';
 import { UserDocument } from '../models/User';
+import { LabelDocument } from '../models/Label';
 
 export interface customRequest extends Request {
   email?: string;
+  username?: string;
   userId?: string;
-  reviewerIds?: Array<UserDocument> ;
+  reviewers?: Array<UserDocument>;
+  assignees?: Array<UserDocument>;
+  labelIds?: Array<LabelDocument>;
 }
 
 const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
@@ -22,6 +26,7 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
   try {
     const decodedToken = verify(token, JWTSECUREKEY) as {
       email: string;
+      username: string;
       userId: string;
     };
     if (!decodedToken) {
@@ -32,8 +37,10 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
       );
     }
     req.email = decodedToken.email;
+    req.username = decodedToken.username;
+    req.userId = decodedToken.userId;
   } catch (err) {
-    return errorHandler(
+    errorHandler(
       'Something went wrong, could not process this request currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
