@@ -1,6 +1,7 @@
-import { ValidationChain, body } from 'express-validator';
+import { ValidationChain, body, param } from 'express-validator';
 import User from '../models/User';
 import Label from '../models/Label';
+import Issue from '../models/Issue';
 
 const filterValidUsers = async (users: string[]) => {
   const invalidUsernames = [];
@@ -15,6 +16,31 @@ const filterValidUsers = async (users: string[]) => {
   }
   return [existingUsers, invalidUsernames];
 };
+
+const issueIdValidator: ValidationChain = param('issueId')
+  .isInt()
+  .withMessage('Issue Id should be integer and not any other value')
+  .custom(async (value: number, { req }) => {
+    const issue = await Issue.findOne({ issueId: value });
+    if (!issue) {
+      throw new Error('Git issue not found with given Id');
+    }
+    req.issue = issue;
+  });
+
+const labelsValidator: ValidationChain = body('labels')
+  .optional()
+  .isArray()
+  .withMessage('Labels should be an array')
+  .custom(async (values: string[], { req }) => {
+    const labels = await Label.find({ labelName: { $in: values } });
+    req.labelIds = [];
+    req.labelNames = [];
+    labels.forEach(label => {
+      req.labelIds.push(label._id);
+      req.labelNames.push(label.labelName);
+    });
+  });
 
 export const createLabelValidator: ValidationChain[] = [
   body('labelName')
@@ -45,7 +71,6 @@ export const createLabelValidator: ValidationChain[] = [
         );
       }
       req.reviewers = reviewers;
-      // TODO: Correct this change in createLabel controller
     })
 ];
 
@@ -60,14 +85,7 @@ export const createIssueValidator: ValidationChain[] = [
     .withMessage('Description is required')
     .isLength({ max: 1000 })
     .withMessage('Description should not exceed 1000 characters'),
-  body('labels')
-    .optional()
-    .isArray()
-    .withMessage('Labels should be an array')
-    .custom(async (values: string[], { req }) => {
-      const labels = await Label.find({ labelName: { $in: values } });
-      req.labelIds = labels.map(label => label._id);
-    }),
+  labelsValidator,
   body('assignees')
     .optional()
     .isArray()
@@ -79,6 +97,34 @@ export const createIssueValidator: ValidationChain[] = [
           `Invalid assignees found ${invalidAssignees.join(', ')}`
         );
       }
-      req.assigneeIds = assignees;
+      req.assignees = assignees;
     })
+];
+
+export const commentValidator: ValidationChain[] = [
+  issueIdValidator,
+  body('text')
+    .notEmpty()
+    .withMessage('Comment text is required')
+    .isLength({ max: 500 })
+    .withMessage('Comment text should not exceed 500 characters')
+];
+
+export const assignValidator: ValidationChain[] = [
+  issueIdValidator,
+  body('assignee')
+    .notEmpty()
+    .withMessage('Assignee name is required')
+    .custom(async (value: string, { req }) => {
+      const assignee = await User.findOne({ username: value });
+      if (!assignee) {
+        throw new Error('Invalid assignee name found');
+      }
+      req.assignee = assignee;
+    })
+];
+
+export const addLabelValidator: ValidationChain[] = [
+  issueIdValidator,
+  labelsValidator
 ];

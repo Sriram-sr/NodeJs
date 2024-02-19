@@ -4,14 +4,18 @@ import { HttpStatus, errorHandler } from '../utils/error-handlers';
 import { JWTSECUREKEY } from '../utils/env-variables';
 import { UserDocument } from '../models/User';
 import { LabelDocument } from '../models/Label';
+import { IssueDocument } from '../models/Issue';
 
 export interface customRequest extends Request {
   email?: string;
   username?: string;
-  userId?: string;
+  userId?: UserDocument;
   reviewers?: Array<UserDocument>;
   assignees?: Array<UserDocument>;
   labelIds?: Array<LabelDocument>;
+  issue?: IssueDocument;
+  assignee?: UserDocument;
+  labelNames?: Array<string>;
 }
 
 const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
@@ -27,7 +31,7 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
     const decodedToken = verify(token, JWTSECUREKEY) as {
       email: string;
       username: string;
-      userId: string;
+      userId: UserDocument;
     };
     if (!decodedToken) {
       return errorHandler(

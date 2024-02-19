@@ -4,7 +4,7 @@ import logger from 'morgan';
 import { HttpError, HttpStatus } from './utils/error-handlers';
 import { MONGODB_URI, PORT } from './utils/env-variables';
 import { initializeCounter } from './utils/mongoose-counter';
-import { createLabelValidator } from './validators/common-validators';
+import { createLabelValidator } from './validators/issue-validators';
 import { getLabels, createLabel } from './controllers/common-controllers';
 import authRouter from './routes/auth-routes';
 import issueRouter from './routes/issue-routes';

@@ -77,7 +77,7 @@ export const signinUser: RequestHandler = async (req, res, next) => {
       {
         email: user.email,
         username: user.username,
-        userId: user._id.toString()
+        userId: user._id
       },
       JWTSECUREKEY,
       { expiresIn: JWT_EXPIRY_TIME }
