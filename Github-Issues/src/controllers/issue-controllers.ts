@@ -32,7 +32,7 @@ export const createIssue: RequestHandler = async (
       const assignees = req.assignees
         .map(assignee => assignee.username)
         .join(', ');
-      events = [`${req.username} assigned ${assignees}`];
+      events = [`${req.username} assigned ${assignees} on ${new Date()}`];
     }
 
     const issue = await Issue.create({
@@ -84,9 +84,16 @@ export const assignUser: RequestHandler = async (
       );
     }
     req.issue?.assignees.unshift(req.assignee?._id);
-    req.issue?.events.push(
-      `${req.username} assigned ${req.assignee?.username}`
-    );
+    let assignEventStr;
+
+    if (req.userId?.toString() === req.assignee?._id.toString()) {
+      assignEventStr = `${req.username} self assigned this on ${new Date()}`;
+    } else {
+      assignEventStr = `${req.username} assigned ${
+        req.assignee?.username
+      } on ${new Date()}`;
+    }
+    req.issue?.events.push(assignEventStr);
     const updatedIssue = await req.issue?.save();
 
     res.status(HttpStatus.OK).json({
@@ -96,6 +103,83 @@ export const assignUser: RequestHandler = async (
   } catch (err) {
     errorHandler(
       'Something went wrong, could not assign user currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const unassignUser: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+
+  try {
+    const assigneeIdx = req.issue?.assignees.findIndex(
+      assignee => assignee._id.toString() === req.assignee?._id.toString()
+    );
+    if (!(assigneeIdx! >= 0)) {
+      return errorHandler(
+        'User is not assigned earlier to unassign',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    req.issue?.assignees.splice(assigneeIdx!, 1);
+    let unassignEventStr;
+    if (req.userId?.toString() === req.assignee?._id.toString()) {
+      unassignEventStr = `${req.username} unassigned them on ${new Date()}`;
+    } else {
+      unassignEventStr = `${req.username} unassigned ${
+        req.assignee?.username
+      } on ${new Date()}`;
+    }
+    req.issue?.events.push(unassignEventStr);
+    const updatedIssue = await req.issue?.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully unssigned user from git issue',
+      updatedIssue
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not unassign user currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const getLabelsOnIssue: RequestHandler = async (req, res, next) => {
+  const { issueId } = req.params as { issueId: string };
+
+  try {
+    const issue = await Issue.findOne({ issueId: issueId }).populate({
+      path: 'labels',
+      select: 'labelName -_id'
+    });
+    if (!issue) {
+      return errorHandler(
+        'Issue not found with given issue Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched label present in the issue',
+      issueTitle: issue.title,
+      labels: issue?.labels
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get labels currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err
@@ -120,7 +204,7 @@ export const addLabelOnIssue: RequestHandler = async (
       req.issue.events.push(
         `${req.username} added ${req.labelNames?.join(', ')} label${
           req.labelNames!.length > 1 ? 's' : ''
-        }`
+        } on ${new Date()}`
       );
       const updatedIssue = await req.issue.save();
 
