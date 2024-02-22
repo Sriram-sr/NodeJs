@@ -17,7 +17,7 @@ const filterValidUsers = async (users: string[]) => {
   return [existingUsers, invalidUsernames];
 };
 
-const issueIdValidator: ValidationChain = param('issueId')
+export const issueIdValidator: ValidationChain = param('issueId')
   .isInt()
   .withMessage('Issue Id should be integer and not any other value')
   .custom(async (value: number, { req }) => {

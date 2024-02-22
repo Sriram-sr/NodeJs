@@ -4,7 +4,8 @@ import {
   createIssueValidator,
   assignValidator,
   commentValidator,
-  addLabelValidator
+  addLabelValidator,
+  issueIdValidator
 } from '../validators/issue-validators';
 import {
   createIssue,
@@ -12,7 +13,9 @@ import {
   unassignUser,
   commentOnIssue,
   addLabelOnIssue,
-  getLabelsOnIssue
+  getLabelsOnIssue,
+  closeIssue,
+  reopenIssue
 } from '../controllers/issue-controllers';
 
 const router = Router();
@@ -29,5 +32,7 @@ router
 router
   .route('/:issueId/comment')
   .post(isAuth, commentValidator, commentOnIssue);
+router.route('/:issueId/close').patch(isAuth, issueIdValidator, closeIssue);
+router.route('/:issueId/reopen').patch(isAuth, issueIdValidator, reopenIssue);
 
 export default router;

@@ -9,11 +9,7 @@ import {
 import { Counter } from '../utils/mongoose-counter';
 import Issue, { IssueInput } from '../models/Issue';
 
-export const createIssue: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const createIssue: RequestHandler = async (req: customRequest, res, next) => {
   const validationErrors = validationResult(req);
   if (!validationErrors.isEmpty()) {
     return validationErrorHandler(validationErrors.array(), next);
@@ -61,11 +57,7 @@ export const createIssue: RequestHandler = async (
   }
 };
 
-export const assignUser: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const assignUser: RequestHandler = async (req: customRequest, res, next) => {
   const validationErrors = validationResult(req);
   if (!validationErrors.isEmpty()) {
     return validationErrorHandler(validationErrors.array(), next);
@@ -110,11 +102,7 @@ export const assignUser: RequestHandler = async (
   }
 };
 
-export const unassignUser: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const unassignUser: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
@@ -156,7 +144,7 @@ export const unassignUser: RequestHandler = async (
   }
 };
 
-export const getLabelsOnIssue: RequestHandler = async (req, res, next) => {
+const getLabelsOnIssue: RequestHandler = async (req, res, next) => {
   const { issueId } = req.params as { issueId: string };
 
   try {
@@ -187,7 +175,7 @@ export const getLabelsOnIssue: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const addLabelOnIssue: RequestHandler = async (
+const addLabelOnIssue: RequestHandler = async (
   req: customRequest,
   res,
   next
@@ -223,7 +211,7 @@ export const addLabelOnIssue: RequestHandler = async (
   }
 };
 
-export const commentOnIssue: RequestHandler = async (
+const commentOnIssue: RequestHandler = async (
   req: customRequest,
   res,
   next
@@ -250,4 +238,87 @@ export const commentOnIssue: RequestHandler = async (
       err
     );
   }
+};
+
+const closeIssue: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+
+  if (req.issue?.status === 'closed') {
+    return errorHandler(
+      'Git issue is already in closed state',
+      HttpStatus.BAD_REQUEST,
+      next
+    );
+  }
+
+  try {
+    if (req.issue) {
+      req.issue.status = 'closed';
+    }
+    req.issue?.events.push(
+      `${req.username} closed this issue on ${new Date()}`
+    );
+    const updatedIssue = await req.issue?.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully closed the issue',
+      updatedIssue
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not close the issue currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const reopenIssue: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+
+  if (req.issue?.status === 'open') {
+    return errorHandler(
+      'Git issue is already in open state',
+      HttpStatus.BAD_REQUEST,
+      next
+    );
+  }
+
+  try {
+    if (req.issue) {
+      req.issue.status = 'open';
+    }
+    req.issue?.events.push(
+      `${req.username} re-opened this issue on ${new Date()}`
+    );
+    const updatedIssue = await req.issue?.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully re-opened the issue',
+      updatedIssue
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not re-open the issue currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export {
+  createIssue,
+  assignUser,
+  unassignUser,
+  commentOnIssue,
+  addLabelOnIssue,
+  getLabelsOnIssue,
+  closeIssue,
+  reopenIssue
 };
