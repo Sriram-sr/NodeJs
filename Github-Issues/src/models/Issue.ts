@@ -1,7 +1,8 @@
-import { Document, Schema, Types, model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 import { UserDocument } from './User';
 import { Comment, PullRequestDocument } from './PullRequest';
 import { LabelDocument } from './Label';
+import { MilestoneDocument } from './Milestone';
 
 export interface IssueDocument extends Document {
   issueId: number;
@@ -13,7 +14,7 @@ export interface IssueDocument extends Document {
   events: Array<string>;
   labels: Array<LabelDocument>;
   assignees: Array<UserDocument>;
-  milestone: Types.ObjectId;
+  milestone: MilestoneDocument | undefined;
   comments: Array<Comment>;
 }
 

@@ -7,6 +7,7 @@ import {
 } from '../utils/error-handlers';
 import { customRequest } from '../middlewares/is-auth';
 import Label, { LabelInput } from '../models/Label';
+import Milestone, { MilestoneDocument } from '../models/Milestone';
 import { UserDocument } from '../models/User';
 
 export const getLabels: RequestHandler = async (_, res, next) => {
@@ -54,6 +55,51 @@ export const createLabel: RequestHandler = async (
   } catch (err) {
     errorHandler(
       'Somethig went wrong, could not create label currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const getMilestones: RequestHandler = async (req, res, next) => {
+  const { page: currentPage } = (req.query as { page: string }) || 1;
+  const perPage = 10;
+
+  try {
+    const milestones = await Milestone.find()
+      .skip((+currentPage - 1) * perPage)
+      .limit(perPage);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched milestones',
+      milestones
+    });
+  } catch (err) {
+    errorHandler(
+      'Somethig went wrong, could not create label currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const createMilestone: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { title, description, dueDate } = req.body as MilestoneDocument;
+
+  try {
+    const milestone = await Milestone.create({ title, description, dueDate });
+
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully created milestone',
+      milestone
+    });
+  } catch (err) {
+    errorHandler(
+      'Somethig went wrong, could not create milestone currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err

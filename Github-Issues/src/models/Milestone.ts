@@ -1,6 +1,6 @@
 import { Document, Schema, model } from 'mongoose';
 
-interface MilestoneDocument extends Document {
+export interface MilestoneDocument extends Document {
   title: string;
   description: string;
   dueDate: Date;

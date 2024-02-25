@@ -17,7 +17,7 @@ const filterValidUsers = async (users: string[]) => {
   return [existingUsers, invalidUsernames];
 };
 
-export const issueIdValidator: ValidationChain = param('issueId')
+const issueIdValidator: ValidationChain = param('issueId')
   .isInt()
   .withMessage('Issue Id should be integer and not any other value')
   .custom(async (value: number, { req }) => {
@@ -42,39 +42,7 @@ const labelsValidator: ValidationChain = body('labels')
     });
   });
 
-export const createLabelValidator: ValidationChain[] = [
-  body('labelName')
-    .notEmpty()
-    .withMessage('Label name is required')
-    .isLength({ max: 15 })
-    .withMessage('Label name should be within 15 characters')
-    .custom(async value => {
-      const existingLabel = await Label.findOne({ labelName: value });
-      if (existingLabel) {
-        throw new Error('Label with the same name already exists');
-      }
-    }),
-  body('description')
-    .notEmpty()
-    .withMessage('Description is required')
-    .isLength({ min: 6, max: 40 })
-    .withMessage('Description should not exceed 6 to 40 characters'),
-  body('reviewers')
-    .optional()
-    .isArray()
-    .withMessage('reviewers should be an array')
-    .custom(async (values: string[], { req }) => {
-      const [reviewers, invalidReviewers] = await filterValidUsers(values);
-      if (invalidReviewers.length > 0) {
-        throw new Error(
-          `Invalid reviewers found ${invalidReviewers.join(', ')}`
-        );
-      }
-      req.reviewers = reviewers;
-    })
-];
-
-export const createIssueValidator: ValidationChain[] = [
+const createIssueValidator: ValidationChain[] = [
   body('title')
     .notEmpty()
     .withMessage('Title is required')
@@ -101,7 +69,7 @@ export const createIssueValidator: ValidationChain[] = [
     })
 ];
 
-export const commentValidator: ValidationChain[] = [
+const commentValidator: ValidationChain[] = [
   issueIdValidator,
   body('text')
     .notEmpty()
@@ -110,7 +78,7 @@ export const commentValidator: ValidationChain[] = [
     .withMessage('Comment text should not exceed 500 characters')
 ];
 
-export const assignValidator: ValidationChain[] = [
+const assignValidator: ValidationChain[] = [
   issueIdValidator,
   body('assignee')
     .notEmpty()
@@ -124,7 +92,16 @@ export const assignValidator: ValidationChain[] = [
     })
 ];
 
-export const addLabelValidator: ValidationChain[] = [
+const addLabelValidator: ValidationChain[] = [
   issueIdValidator,
   labelsValidator
 ];
+
+export {
+  filterValidUsers,
+  createIssueValidator,
+  assignValidator,
+  commentValidator,
+  addLabelValidator,
+  issueIdValidator
+};

@@ -15,7 +15,9 @@ import {
   addLabelOnIssue,
   getLabelsOnIssue,
   closeIssue,
-  reopenIssue
+  reopenIssue,
+  addMilestone,
+  clearMilestone
 } from '../controllers/issue-controllers';
 
 const router = Router();
@@ -34,5 +36,11 @@ router
   .post(isAuth, commentValidator, commentOnIssue);
 router.route('/:issueId/close').patch(isAuth, issueIdValidator, closeIssue);
 router.route('/:issueId/reopen').patch(isAuth, issueIdValidator, reopenIssue);
+router
+  .route('/:issueId/milestone')
+  .patch(isAuth, issueIdValidator, addMilestone)
+  .delete(isAuth, issueIdValidator, clearMilestone);
 
 export default router;
+
+// TODO: To complete milestone routes.

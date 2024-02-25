@@ -8,6 +8,7 @@ import {
 } from '../utils/error-handlers';
 import { Counter } from '../utils/mongoose-counter';
 import Issue, { IssueInput } from '../models/Issue';
+import Milestone from '../models/Milestone';
 
 const createIssue: RequestHandler = async (req: customRequest, res, next) => {
   const validationErrors = validationResult(req);
@@ -23,12 +24,14 @@ const createIssue: RequestHandler = async (req: customRequest, res, next) => {
       { new: true }
     );
 
-    let events: string[] = [];
+    let events: string[] = [
+      `${req.username} opened this issue on ${new Date()}`
+    ];
     if (req.assignees) {
       const assignees = req.assignees
         .map(assignee => assignee.username)
         .join(', ');
-      events = [`${req.username} assigned ${assignees} on ${new Date()}`];
+      events.push(`${req.username} assigned ${assignees} on ${new Date()}`);
     }
 
     const issue = await Issue.create({
@@ -312,6 +315,82 @@ const reopenIssue: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
+const addMilestone: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { title } = req.body as { title: string };
+
+  try {
+    const milestone = await Milestone.findOne({ title: title });
+    if (!milestone) {
+      return errorHandler(
+        'Milestone not found to link in the git issue',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+
+    if (req.issue) {
+      req.issue.milestone = milestone._id;
+      req.issue.events.push(
+        `${req.username} added this to ${
+          milestone.title
+        } milestone on ${new Date()}`
+      );
+    }
+    const updatedIssue = await req.issue?.save();
+    res.status(HttpStatus.OK).json({
+      message: 'Sucessfully added milestone to the issue',
+      updatedIssue
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add milestone currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const clearMilestone: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { title } = req.body as { title: string };
+
+  try {
+    if (!req.issue?.milestone) {
+      return errorHandler(
+        'No milestone present in the git issue to remove',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    req.issue.milestone = undefined;
+    req.issue.events.push(
+      `${req.username} removed ${title} milestone on ${new Date()}`
+    );
+    const updatedIssue = await req.issue?.save();
+    res.status(HttpStatus.OK).json({
+      message: 'Sucessfully removed milestone from the issue',
+      updatedIssue
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not remove milestone currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   createIssue,
   assignUser,
@@ -320,5 +399,7 @@ export {
   addLabelOnIssue,
   getLabelsOnIssue,
   closeIssue,
-  reopenIssue
+  reopenIssue,
+  addMilestone,
+  clearMilestone
 };

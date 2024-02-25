@@ -4,8 +4,16 @@ import logger from 'morgan';
 import { HttpError, HttpStatus } from './utils/error-handlers';
 import { MONGODB_URI, PORT } from './utils/env-variables';
 import { initializeCounter } from './utils/mongoose-counter';
-import { createLabelValidator } from './validators/issue-validators';
-import { getLabels, createLabel } from './controllers/common-controllers';
+import {
+  createLabelValidator,
+  createMilestoneValidator
+} from './validators/common-validators';
+import {
+  getLabels,
+  createLabel,
+  getMilestones,
+  createMilestone
+} from './controllers/common-controllers';
 import authRouter from './routes/auth-routes';
 import issueRouter from './routes/issue-routes';
 
@@ -15,8 +23,14 @@ app.use(logger('dev'));
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-app.get('/api/v1/label', getLabels);
-app.post('/api/v1/label', createLabelValidator, createLabel);
+app
+  .route('/api/v1/label')
+  .get(getLabels)
+  .post(createLabelValidator, createLabel);
+app
+  .route('/api/v1/milestone')
+  .get(getMilestones)
+  .post(createMilestoneValidator, createMilestone);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/issue', issueRouter);
 
