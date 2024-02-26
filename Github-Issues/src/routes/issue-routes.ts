@@ -8,6 +8,8 @@ import {
   issueIdValidator
 } from '../validators/issue-validators';
 import {
+  getIssues,
+  getSingleIssue,
   createIssue,
   assignUser,
   unassignUser,
@@ -22,7 +24,11 @@ import {
 
 const router = Router();
 
-router.route('/').post(isAuth, createIssueValidator, createIssue);
+router
+  .route('/')
+  .get(getIssues)
+  .post(isAuth, createIssueValidator, createIssue);
+router.route('/:issueId').get(getSingleIssue);
 router.route('/:issueId/assign').patch(isAuth, assignValidator, assignUser);
 router
   .route('/:issueId/unassign')
@@ -42,5 +48,3 @@ router
   .delete(isAuth, issueIdValidator, clearMilestone);
 
 export default router;
-
-// TODO: To complete milestone routes.

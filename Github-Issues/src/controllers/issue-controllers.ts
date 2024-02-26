@@ -1,5 +1,6 @@
 import { RequestHandler } from 'express';
 import { validationResult } from 'express-validator';
+import { Types } from 'mongoose';
 import { customRequest } from '../middlewares/is-auth';
 import {
   HttpStatus,
@@ -9,6 +10,91 @@ import {
 import { Counter } from '../utils/mongoose-counter';
 import Issue, { IssueInput } from '../models/Issue';
 import Milestone from '../models/Milestone';
+
+interface getIssuesParams {
+  page: number;
+  status: 'open' | 'closed';
+  createdBy: Types.ObjectId;
+  labels: Types.ObjectId;
+  assignees?: Types.ObjectId;
+  milestone: Types.ObjectId;
+  newest: boolean;
+  oldest: boolean;
+}
+
+// TODO: getUsers api with search option
+const getIssues: RequestHandler = async (req, res, next) => {
+  const {
+    status,
+    createdBy,
+    labels,
+    assignees,
+    milestone,
+    newest,
+    oldest,
+    page
+  } = req.query as Partial<getIssuesParams>;
+  const currentPage = page ?? 1;
+  const perPage = 10;
+  let filters: Partial<getIssuesParams> = {};
+  const sortOptions: any = newest
+    ? { createdAt: -1 }
+    : oldest
+    ? { createdAt: 1 }
+    : {};
+
+  if (status) filters = { status };
+  if (createdBy) filters = { ...filters, createdBy };
+  if (labels) filters = { ...filters, labels };
+  if (assignees) filters = { ...filters, assignees: assignees };
+  if (milestone) filters = { ...filters, milestone };
+
+  try {
+    const issues = await Issue.find(filters)
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage)
+      .sort(sortOptions);
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched git issues',
+      issues
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get issues currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const getSingleIssue: RequestHandler = async (req, res, next) => {
+  const { issueId } = req.params as { issueId: string };
+  try {
+    const issue = await Issue.findOne({ issueId: issueId })
+      .populate({ path: 'createdBy', select: 'username -_id' })
+      .populate({ path: 'labels', select: 'labelName -_id' })
+      .populate({ path: 'assignees', select: 'username -_id' })
+      .populate({ path: 'milestone', select: 'title -_id' })
+      .populate({
+        path: 'comments',
+        populate: [{ path: 'commentedBy', select: 'username -_id' }]
+      });
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfuly fetched git issue',
+      issue
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get issue currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
 
 const createIssue: RequestHandler = async (req: customRequest, res, next) => {
   const validationErrors = validationResult(req);
@@ -392,6 +478,8 @@ const clearMilestone: RequestHandler = async (
 };
 
 export {
+  getIssues,
+  getSingleIssue,
   createIssue,
   assignUser,
   unassignUser,
