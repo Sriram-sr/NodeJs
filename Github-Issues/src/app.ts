@@ -16,6 +16,7 @@ import {
 } from './controllers/common-controllers';
 import authRouter from './routes/auth-routes';
 import issueRouter from './routes/issue-routes';
+import prRouter from './routes/pr-routes';
 
 const app = express();
 
@@ -33,6 +34,7 @@ app
   .post(createMilestoneValidator, createMilestone);
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/issue', issueRouter);
+app.use('/api/v1/pr', prRouter);
 
 app.use((error: HttpError, _: Request, res: Response, _1: NextFunction) => {
   const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;

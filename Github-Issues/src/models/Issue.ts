@@ -29,6 +29,7 @@ const issueSchema = new Schema<IssueDocument>(
   {
     issueId: {
       type: Number,
+      unique: true,
       required: true
     },
     title: {

@@ -34,6 +34,16 @@ const labelsValidator: ValidationChain = body('labels')
   .withMessage('Labels should be an array')
   .custom(async (values: string[], { req }) => {
     const labels = await Label.find({ labelName: { $in: values } });
+    if (values.length !== labels.length) {
+      const existingLabelNames = labels.map(label => label.labelName);
+      const invalidLabels: string[] = [];
+      values.forEach(label => {
+        if (!existingLabelNames.includes(label)) {
+          invalidLabels.push(label);
+        }
+      });
+      throw new Error(`Invalid labels found ${invalidLabels.join(', ')}`);
+    }
     req.labelIds = [];
     req.labelNames = [];
     labels.forEach(label => {

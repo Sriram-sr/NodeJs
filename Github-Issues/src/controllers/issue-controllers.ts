@@ -113,6 +113,7 @@ const createIssue: RequestHandler = async (req: customRequest, res, next) => {
     let events: string[] = [
       `${req.username} opened this issue on ${new Date()}`
     ];
+
     if (req.assignees) {
       const assignees = req.assignees
         .map(assignee => assignee.username)

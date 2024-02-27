@@ -97,3 +97,20 @@ export const signinUser: RequestHandler = async (req, res, next) => {
     );
   }
 };
+
+export const getUsers: RequestHandler = async (_, res, next) => {
+  try {
+    const users = await User.find({}).select('username');
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched users',
+      users
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get users currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};

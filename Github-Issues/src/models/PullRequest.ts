@@ -9,16 +9,23 @@ export type Comment = {
 };
 
 export interface PullRequestDocument extends Document {
+  prId: number;
   fixingIssue: IssueDocument;
   label: LabelDocument;
   status: string;
   events: Array<string>;
+  createdBy: UserDocument;
   comments: Array<Comment>;
   reviews: Array<UserDocument>;
 }
 
 const pullRequestSchema = new Schema<PullRequestDocument>(
   {
+    prId: {
+      type: Number,
+      unique: true,
+      required: true
+    },
     fixingIssue: {
       type: Schema.Types.ObjectId,
       ref: 'Issue',
@@ -31,9 +38,15 @@ const pullRequestSchema = new Schema<PullRequestDocument>(
     },
     status: {
       type: String,
+      enum: ['open', 'closed'],
       required: true
     },
     events: [String],
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
     comments: [
       {
         text: {

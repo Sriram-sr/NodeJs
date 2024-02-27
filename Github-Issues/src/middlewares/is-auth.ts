@@ -14,6 +14,7 @@ export interface customRequest extends Request {
   assignees?: Array<UserDocument>;
   labelIds?: Array<LabelDocument>;
   issue?: IssueDocument;
+  label?: LabelDocument;
   assignee?: UserDocument;
   labelNames?: Array<string>;
 }
