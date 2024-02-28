@@ -8,8 +8,8 @@ import {
 } from '../utils/error-handlers';
 import PullRequest from '../models/PullRequest';
 import { Counter } from '../utils/mongoose-counter';
+import Label from '../models/Label';
 
-// TODO: Get PR reviewers route should be
 export const createPullRequest: RequestHandler = async (
   req: customRequest,
   res,
@@ -49,6 +49,49 @@ export const createPullRequest: RequestHandler = async (
   } catch (err) {
     errorHandler(
       'Something went wrong, could not create pull request currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const getPrReviewers: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { labelName } = req.params as { labelName: string };
+
+  try {
+    const label = await Label.findOne({ labelName: labelName }).populate({
+      path: 'apReviewers',
+      select: 'username'
+    });
+
+    if (!label) {
+      return errorHandler(
+        'Label not found with this name',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+
+    if (!(label.apReviewers.length >= 1)) {
+      return errorHandler(
+        'Enter a valid AP label',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched PR reviewers',
+      reviewers: label.apReviewers
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get reviewers currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err

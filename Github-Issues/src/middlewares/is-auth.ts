@@ -5,6 +5,7 @@ import { JWTSECUREKEY } from '../utils/env-variables';
 import { UserDocument } from '../models/User';
 import { LabelDocument } from '../models/Label';
 import { IssueDocument } from '../models/Issue';
+import { PullRequestDocument } from '../models/PullRequest';
 
 export interface customRequest extends Request {
   email?: string;
@@ -14,6 +15,7 @@ export interface customRequest extends Request {
   assignees?: Array<UserDocument>;
   labelIds?: Array<LabelDocument>;
   issue?: IssueDocument;
+  pr?: PullRequestDocument;
   label?: LabelDocument;
   assignee?: UserDocument;
   labelNames?: Array<string>;
