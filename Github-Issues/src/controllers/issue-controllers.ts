@@ -313,7 +313,11 @@ const commentOnIssue: RequestHandler = async (
   const { text } = req.body as { text: string };
 
   try {
-    req.issue?.comments.unshift({ text: text, commentedBy: req.userId! });
+    req.issue?.comments.push({
+      text: text,
+      commentedBy: req.userId!,
+      createdAt: new Date()
+    });
     const updatedIssue = await req.issue?.save();
 
     res.status(HttpStatus.CREATED).json({

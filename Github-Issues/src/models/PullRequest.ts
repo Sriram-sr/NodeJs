@@ -6,6 +6,7 @@ import { LabelDocument } from './Label';
 export type Comment = {
   text: string;
   commentedBy: UserDocument;
+  createdAt: Date;
 };
 
 export interface PullRequestDocument extends Document {
@@ -56,6 +57,10 @@ const pullRequestSchema = new Schema<PullRequestDocument>(
         commentedBy: {
           type: Schema.Types.ObjectId,
           ref: 'User',
+          required: true
+        },
+        createdAt: {
+          type: Date,
           required: true
         }
       }

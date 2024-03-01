@@ -6,7 +6,7 @@ import {
   errorHandler,
   validationErrorHandler
 } from '../utils/error-handlers';
-import PullRequest from '../models/PullRequest';
+import PullRequest, { Comment } from '../models/PullRequest';
 import { Counter } from '../utils/mongoose-counter';
 import Label from '../models/Label';
 
@@ -56,7 +56,7 @@ export const createPullRequest: RequestHandler = async (
   }
 };
 
-export const getPrReviewers: RequestHandler = async (
+export const getPRReviewers: RequestHandler = async (
   req: customRequest,
   res,
   next
@@ -98,3 +98,59 @@ export const getPrReviewers: RequestHandler = async (
     );
   }
 };
+
+export const commentOnPR: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { text } = req.body as { text: string };
+
+  try {
+    const comment: Comment = {
+      text,
+      commentedBy: req.userId!,
+      createdAt: new Date()
+    };
+    req.pr?.comments.push(comment);
+    const updatedPR = await req.pr?.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully added comment in PR',
+      updatedPR
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add comment currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const requestReview: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { reviewers } = req.body as { reviewers: string[] };
+
+  req.pr?.events.push(
+    `${req.username} requested review from ${reviewers.join(', ')}`
+  );
+  const updatedPR = await req.pr?.save();
+
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully requested for review',
+    updatedPR
+  });
+};
+
+// TODO: Approve PR to work on
