@@ -22,7 +22,6 @@ interface getIssuesParams {
   oldest: boolean;
 }
 
-// TODO: getUsers api with search option
 const getIssues: RequestHandler = async (req, res, next) => {
   const {
     status,

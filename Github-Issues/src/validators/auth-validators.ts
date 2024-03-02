@@ -18,8 +18,8 @@ export const signupValidator: ValidationChain[] = [
     .notEmpty()
     .withMessage('Username is required')
     .trim()
-    // .isLength({ min: 6, max: 15 })
-    // .withMessage('Username should not exceed 6 to 15 characters')
+    .isLength({ min: 6, max: 15 })
+    .withMessage('Username should not exceed 6 to 15 characters')
     .matches(/[a-z]+/g)
     .withMessage(
       'Username should contain only lowercase letters and not numbers'
@@ -31,8 +31,8 @@ export const signupValidator: ValidationChain[] = [
       }
     }),
   body('password').notEmpty().withMessage('Password is required').trim()
-  // .isLength({ min: 6, max: 15 })
-  // .withMessage('Passoword should be atleast 6 to 15 characters')
+  .isLength({ min: 6, max: 15 })
+  .withMessage('Passoword should be atleast 6 to 15 characters')
 ];
 
 export const signinValidator = [

@@ -3,7 +3,7 @@ import Issue from '../models/Issue';
 import Label from '../models/Label';
 import PullRequest from '../models/PullRequest';
 
-const prIdValidator: ValidationChain = param('prId')
+export const prIdValidator: ValidationChain = param('prId')
   .isInt()
   .withMessage('PR Id should be integer and not any other value')
   .custom(async (value: number, { req }) => {
@@ -13,6 +13,10 @@ const prIdValidator: ValidationChain = param('prId')
     }
     req.pr = pullRequest;
   });
+
+export const getPRValidator: ValidationChain = param('prId')
+  .isInt()
+  .withMessage('PR Id should be integer and not any other value');
 
 export const createPRValidator: ValidationChain[] = [
   body('fixingIssue')
