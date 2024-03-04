@@ -6,6 +6,7 @@ export interface AccountDocument extends Document {
   user: UserDocument;
   type: 'savings' | 'current';
   balance: number;
+  upiId: string;
   dateOpened: Date;
   dateClosed: Date;
   status: 'active' | 'inactive';
@@ -28,6 +29,10 @@ const accountSchema = new Schema<AccountDocument>(
       type: Number,
       default: 0,
       required: true
+    },
+    upiId: {
+      type: String,
+      unique: true
     },
     dateOpened: {
       type: Date,
