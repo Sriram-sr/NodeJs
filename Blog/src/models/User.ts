@@ -5,12 +5,14 @@ interface Activity {
   post: Types.ObjectId;
 }
 
-interface UserDocument extends Document {
+export interface UserDocument extends Document {
   email: string;
   username: string;
   password: string;
   profilePic: string;
   about: string;
+  posts: Array<Types.ObjectId>;
+  repostCount: number;
   following: Array<Types.ObjectId>;
   followers: Array<Types.ObjectId>;
   lastActivities: Array<Activity>;
@@ -33,6 +35,13 @@ const userSchema = new Schema<UserDocument>({
   },
   profilePic: String,
   about: String,
+  posts: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Post'
+    }
+  ],
+  repostCount: Number,
   following: [
     {
       type: Schema.Types.ObjectId,
