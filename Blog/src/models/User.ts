@@ -18,6 +18,12 @@ export interface UserDocument extends Document {
   lastActivities: Array<Activity>;
 }
 
+export interface UserInput {
+  email: string;
+  username: string;
+  password: string;
+}
+
 const userSchema = new Schema<UserDocument>({
   email: {
     type: String,
