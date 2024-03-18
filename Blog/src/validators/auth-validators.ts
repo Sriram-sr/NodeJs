@@ -1,4 +1,4 @@
-import { ValidationChain, body } from 'express-validator';
+import { ValidationChain, body, oneOf } from 'express-validator';
 import User from '../models/User';
 
 export const signupValidator: ValidationChain[] = [
@@ -34,4 +34,22 @@ export const signupValidator: ValidationChain[] = [
     .trim()
     .isLength({ min: 5, max: 15 })
     .withMessage('Password should not exceed 5 to 15 characters')
+];
+
+export const signinValidator = [
+  oneOf(
+    [
+      body('email')
+        .exists()
+        .isEmail()
+        .withMessage('Enter a valid email')
+        .normalizeEmail(),
+      body('username').exists().trim()
+    ],
+    {
+      message: 'Atleast one of email or username should be provided',
+      errorType: 'least_errored'
+    }
+  ),
+  body('password').notEmpty().withMessage('Password is required').trim()
 ];

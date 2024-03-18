@@ -19,8 +19,8 @@ export interface UserDocument extends Document {
 }
 
 export interface UserInput {
-  email: string;
-  username: string;
+  email?: string;
+  username?: string;
   password: string;
 }
 
