@@ -10,6 +10,7 @@ import {
   validationErrorHandler
 } from '../utils/error-handlers';
 
+// @access Public
 export const signupUser: RequestHandler = async (
   req: Request,
   res: Response,
@@ -46,6 +47,7 @@ export const signupUser: RequestHandler = async (
   }
 };
 
+// @access Public
 export const signinUser: RequestHandler = async (
   req: Request,
   res: Response,
@@ -92,6 +94,84 @@ export const signinUser: RequestHandler = async (
   } catch (err) {
     errorHandler(
       'Something went wrong, could not signin currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @access Public
+export const getUserProfile: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { userId } = req.params as { userId: string };
+
+  try {
+    const profile = await User.findById(userId).select(
+      'username email profilePic about'
+    ); // TODO more fields to get and populate
+
+    if (!profile) {
+      return errorHandler(
+        'User not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched User profile',
+      profile
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get profile currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const updateUserProfile: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { userId } = req.params as { userId: string };
+  const { about } = req.body as { about?: string };
+
+  try {
+    const profile = await User.findById(userId);
+
+    if (!profile) {
+      return errorHandler(
+        'User not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+
+    if (req.file) {
+      profile.profilePic = req.file.path;
+    }
+
+    if (about) profile.about = about;
+
+    const updatedProfile = await profile.save();
+
+    // TODO Verify and send response
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not upadate profile currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err

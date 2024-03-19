@@ -1,7 +1,8 @@
 node_modules/
+.vscode/
+uploads/
+dist/
 tsconfig.json
 package-lock.json
-dist/
 nodemon.json
 .env
-.vscode/

@@ -1,4 +1,4 @@
-import { ValidationChain, body, oneOf } from 'express-validator';
+import { ValidationChain, body, oneOf, param } from 'express-validator';
 import User from '../models/User';
 
 export const signupValidator: ValidationChain[] = [
@@ -52,4 +52,13 @@ export const signinValidator = [
     }
   ),
   body('password').notEmpty().withMessage('Password is required').trim()
+];
+
+export const userIdValidator: ValidationChain = param('userId')
+  .isMongoId()
+  .withMessage('User is Id is not valid mongo Id');
+
+export const updatedProfileValidator: ValidationChain[] = [
+  userIdValidator,
+  body('about')
 ];
