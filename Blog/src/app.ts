@@ -3,7 +3,7 @@ import { connect } from 'mongoose';
 import logger from 'morgan';
 import { HttpError, HttpStatus } from './utils/error-handlers';
 import { MONGODB_URI, PORT } from './utils/env-variables';
-import authRouter from './routes/auth-routes';
+import Router from './routes';
 
 if (!MONGODB_URI) {
   console.error(
@@ -18,7 +18,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use('/api/v1/auth', authRouter);
+app.use('/api/v1', Router);
 
 app.use((error: HttpError, _: Request, res: Response, _1: NextFunction) => {
   const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;

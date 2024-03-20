@@ -58,7 +58,7 @@ export const userIdValidator: ValidationChain = param('userId')
   .isMongoId()
   .withMessage('User is Id is not valid mongo Id');
 
-export const updatedProfileValidator: ValidationChain[] = [
-  userIdValidator,
-  body('about')
-];
+export const updateProfileValidator: ValidationChain = body('about')
+  .optional()
+  .isLength({ max: 100 })
+  .withMessage('About should not exceed 100 characters');

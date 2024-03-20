@@ -1,7 +1,8 @@
-import { RequestHandler, Request, Response, NextFunction } from 'express';
+import { RequestHandler } from 'express';
 import { validationResult } from 'express-validator';
 import { hash, compare } from 'bcryptjs';
 import { sign } from 'jsonwebtoken';
+import { CustomRequest } from '../middlewares/is-auth';
 import User, { UserInput } from '../models/User';
 import { JWTSECUREKEY, JWTEXPIRYTIME } from '../utils/env-variables';
 import {
@@ -11,11 +12,7 @@ import {
 } from '../utils/error-handlers';
 
 // @access Public
-export const signupUser: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const signupUser: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
@@ -48,11 +45,7 @@ export const signupUser: RequestHandler = async (
 };
 
 // @access Public
-export const signinUser: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const signinUser: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
@@ -81,7 +74,7 @@ export const signinUser: RequestHandler = async (
       );
     }
     const token = sign(
-      { email: user.email, username: user.username, _id: user._id },
+      { email: user.email, username: user.username, userId: user._id },
       JWTSECUREKEY,
       { expiresIn: JWTEXPIRYTIME }
     );
@@ -102,11 +95,7 @@ export const signinUser: RequestHandler = async (
 };
 
 // @access Public
-export const getUserProfile: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getUserProfile: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
@@ -138,19 +127,19 @@ export const getUserProfile: RequestHandler = async (
   }
 };
 
+// @access  Private
 export const updateUserProfile: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
+  req: CustomRequest,
+  res,
+  next
 ) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
-  const { userId } = req.params as { userId: string };
   const { about } = req.body as { about?: string };
 
   try {
-    const profile = await User.findById(userId);
+    const profile = await User.findById(req.userId);
 
     if (!profile) {
       return errorHandler(
@@ -168,7 +157,10 @@ export const updateUserProfile: RequestHandler = async (
 
     const updatedProfile = await profile.save();
 
-    // TODO Verify and send response
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully updated profile',
+      updatedProfile
+    });
   } catch (err) {
     errorHandler(
       'Something went wrong, could not upadate profile currently',
