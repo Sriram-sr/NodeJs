@@ -38,12 +38,14 @@ export const createPost: RequestHandler = async (
     const hashtags = content.match(/#[a-zA-Z0-9]+/g) || [];
     if (hashtags?.length > 0) {
       hashtags.map(async tag => {
-        const existingHashtag = await Hashtag.findOne({ tagName: tag });
-        if (existingHashtag) {
-          existingHashtag.posts.push(post._id);
-          await existingHashtag.save();
-        } else {
-          await Hashtag.create({ tagName: tag, posts: [post._id] });
+        if (tag.length <= 15) {
+          const existingHashtag = await Hashtag.findOne({ tagName: tag });
+          if (existingHashtag) {
+            existingHashtag.posts.push(post._id);
+            await existingHashtag.save();
+          } else {
+            await Hashtag.create({ tagName: tag, posts: [post._id] });
+          }
         }
       });
     }
@@ -60,4 +62,34 @@ export const createPost: RequestHandler = async (
       err
     );
   }
+};
+
+// @access  Public
+export const getHashtagPosts: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { tag } = req.params as { tag: string };
+
+  if (tag.length > 15) {
+    return errorHandler(
+      'Enter a valid Hashtag',
+      HttpStatus.UNPROCESSABLE_ENTITY,
+      next
+    );
+  }
+
+  const hashtag = await Hashtag.findOne({ tagName: `#${tag}` }).populate({
+    path: 'posts',
+    select: 'creator title content'
+  });
+
+  if (!hashtag) {
+    return errorHandler('Hashtag not found', HttpStatus.NOT_FOUND, next);
+  }
+
+  res.status(HttpStatus.OK).json({
+    message: 'Sucessfully fetched posts',
+    posts: hashtag.posts
+  });
 };

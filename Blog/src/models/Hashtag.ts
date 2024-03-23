@@ -1,7 +1,7 @@
 import { Document, Schema, model } from 'mongoose';
 import { PostDocument } from './Post';
 
-interface HashtagDocument extends Document {
+export interface HashtagDocument extends Document {
   tagName: string;
   posts: Array<PostDocument>;
 }
