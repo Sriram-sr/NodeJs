@@ -1,7 +1,7 @@
 import { ValidationChain, body, oneOf, param } from 'express-validator';
 import User from '../models/User';
 
-export const signupValidator: ValidationChain[] = [
+export const signupReqValidator: ValidationChain[] = [
   body('email')
     .notEmpty()
     .withMessage('Email is required')
@@ -36,7 +36,7 @@ export const signupValidator: ValidationChain[] = [
     .withMessage('Password should not exceed 5 to 15 characters')
 ];
 
-export const signinValidator = [
+export const signinReqValidator = [
   oneOf(
     [
       body('email')
@@ -58,7 +58,17 @@ export const userIdValidator: ValidationChain = param('userId')
   .isMongoId()
   .withMessage('User is Id is not valid mongo Id');
 
-export const updateProfileValidator: ValidationChain = body('about')
+export const updateProfileReqValidator: ValidationChain = body('about')
   .optional()
   .isLength({ max: 100 })
   .withMessage('About should not exceed 100 characters');
+
+export const followUserReqValidator: ValidationChain[] = [
+  userIdValidator.custom(async (value: string, { req }) => {
+    const validUser = await User.findById(value);
+    if (!validUser) {
+      throw new Error('User not found with this Id');
+    }
+    req.userToFollow = validUser;
+  })
+];

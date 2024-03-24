@@ -1,8 +1,9 @@
-import { Document, Types, Schema, model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
+import { PostDocument } from './Post';
 
 interface Activity {
   activity: string;
-  post: Types.ObjectId;
+  post: PostDocument;
 }
 
 export interface UserDocument extends Document {
@@ -11,10 +12,10 @@ export interface UserDocument extends Document {
   password: string;
   profilePic: string;
   about: string;
-  posts: Array<Types.ObjectId>;
+  posts: Array<PostDocument>;
   repostCount: number;
-  following: Array<Types.ObjectId>;
-  followers: Array<Types.ObjectId>;
+  following: Array<UserDocument>;
+  followers: Array<UserDocument>;
   lastActivities: Array<Activity>;
 }
 

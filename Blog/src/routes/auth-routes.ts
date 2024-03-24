@@ -1,31 +1,13 @@
 import { Router } from 'express';
 import {
-  signupValidator,
-  signinValidator,
-  userIdValidator,
-  updateProfileValidator
+  signupReqValidator,
+  signinReqValidator
 } from '../validators/auth-validators';
-import isAuth from '../middlewares/is-auth';
-import imageParser from '../middlewares/image-parser';
-import {
-  signupUser,
-  signinUser,
-  getUserProfile,
-  updateUserProfile
-} from '../controllers/auth-controllers';
+import { signupUser, signinUser } from '../controllers/auth-controllers';
 
 const router = Router();
 
-router.route('/signup').post(signupValidator, signupUser);
-router.route('/signin').post(signinValidator, signinUser);
-router
-  .route('/user')
-  .put(
-    isAuth,
-    imageParser.single('profilePic'),
-    updateProfileValidator,
-    updateUserProfile
-  );
-router.route('/user/:userId').get(userIdValidator, getUserProfile);
+router.route('/signup').post(signupReqValidator, signupUser);
+router.route('/signin').post(signinReqValidator, signinUser);
 
 export default router;

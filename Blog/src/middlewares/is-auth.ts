@@ -5,9 +5,10 @@ import { JWTSECUREKEY } from '../utils/env-variables';
 import { UserDocument } from '../models/User';
 
 export interface CustomRequest extends Request {
-  userId?: string;
+  userId?: UserDocument;
   email?: string;
-  username?: UserDocument;
+  username?: string;
+  userToFollow?: UserDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: CustomRequest, _, next) => {
@@ -23,9 +24,9 @@ const isAuthenticated: RequestHandler = (req: CustomRequest, _, next) => {
 
   try {
     const decodedToken = verify(token, JWTSECUREKEY) as {
-      userId: string;
+      userId: UserDocument;
       email: string;
-      username: UserDocument;
+      username: string;
     };
     if (!decodedToken) {
       return errorHandler(
