@@ -12,7 +12,8 @@ import {
   followUser,
   unfollowUser,
   getFollowingUsers,
-  getFollowers
+  getFollowers,
+  getSuggestedUsers
 } from '../controllers/user-controllers';
 
 const router = Router();
@@ -27,6 +28,7 @@ router
   );
 router.route('/following').get(isAuth, getFollowingUsers);
 router.route('/followers').get(isAuth, getFollowers);
+router.route('/follow-suggest').get(isAuth, getSuggestedUsers);
 router.route('/:userId').get(userIdValidator, getUserProfile);
 router.route('/:userId/follow').post(isAuth, followReqValidator, followUser);
 router

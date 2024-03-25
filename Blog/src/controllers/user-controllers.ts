@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
 import { validationResult } from 'express-validator';
 import { CustomRequest } from '../middlewares/is-auth';
-import User from '../models/User';
+import User, { UserDocument } from '../models/User';
 import {
   HttpStatus,
   errorHandler,
@@ -237,7 +237,7 @@ export const getFollowers: RequestHandler = async (
   const currentPage = page || 1;
   const perPage = 10;
   const skip = (currentPage - 1) * perPage;
-  const limit = (currentPage - 1) * perPage + perPage;
+  const limit = skip + perPage;
 
   try {
     const user = await User.findById(req.userId)
@@ -260,3 +260,62 @@ export const getFollowers: RequestHandler = async (
     );
   }
 };
+
+// @acess  Private
+export const getSuggestedUsers: RequestHandler = async (
+  req: CustomRequest,
+  res,
+  next
+) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+  type IndirectFollowee = {
+    _id?: UserDocument;
+    username: string;
+  };
+
+  try {
+    const user = await User.findById(req.userId)
+      .select('following -_id')
+      .populate({
+        path: 'following',
+        select: 'following',
+        populate: {
+          path: 'following',
+          select: 'username'
+        }
+      });
+
+    const userFollowingIds = user?.following.map(followee =>
+      followee._id.toString()
+    );
+    const followersOfFollowers: Array<IndirectFollowee> = [];
+    user?.following.forEach(followee => {
+      followee.following.forEach(indirectFollowee => {
+        followersOfFollowers.push(indirectFollowee);
+      });
+    });
+
+    const suggestedFollowees = followersOfFollowers.filter(
+      followee =>
+        !userFollowingIds?.includes(followee._id?.toString()) &&
+        followee._id?.toString() !== req.userId?.toString()
+    );
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched suggested followees',
+      suggestedFollowees: suggestedFollowees.slice(skip, limit)
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get suggested users currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
