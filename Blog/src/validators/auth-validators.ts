@@ -63,12 +63,12 @@ export const updateProfileReqValidator: ValidationChain = body('about')
   .isLength({ max: 100 })
   .withMessage('About should not exceed 100 characters');
 
-export const followUserReqValidator: ValidationChain[] = [
-  userIdValidator.custom(async (value: string, { req }) => {
+export const followReqValidator: ValidationChain = userIdValidator.custom(
+  async (value: string, { req }) => {
     const validUser = await User.findById(value);
     if (!validUser) {
       throw new Error('User not found with this Id');
     }
-    req.userToFollow = validUser;
-  })
-];
+    req.followUser = validUser;
+  }
+);

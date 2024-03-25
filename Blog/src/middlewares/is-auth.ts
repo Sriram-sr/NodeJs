@@ -8,7 +8,7 @@ export interface CustomRequest extends Request {
   userId?: UserDocument;
   email?: string;
   username?: string;
-  userToFollow?: UserDocument;
+  followUser?: UserDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: CustomRequest, _, next) => {
