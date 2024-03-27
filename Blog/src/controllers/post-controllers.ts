@@ -8,6 +8,7 @@ import {
 import Post, { PostDocument } from '../models/Post';
 import { CustomRequest } from '../middlewares/is-auth';
 import Hashtag from '../models/Hashtag';
+import User from '../models/User';
 
 const createHashtag = async (content: string, post: PostDocument) => {
   const hashtags = content.match(/#[a-zA-Z0-9]+/g) || [];
@@ -58,6 +59,9 @@ export const createPost: RequestHandler = async (
     });
 
     await createHashtag(content, post);
+    const user = await User.findById(req.userId);
+    user?.posts.unshift(post._id);
+    await user?.save();
 
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created post',
