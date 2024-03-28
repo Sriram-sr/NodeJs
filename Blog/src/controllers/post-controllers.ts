@@ -191,7 +191,56 @@ export const updatePost: RequestHandler = async (
     });
   } catch (err) {
     errorHandler(
-      'Something went wrong, could not upadte post currently',
+      'Something went wrong, could not update post currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @access  Private
+export const likePost: RequestHandler = async (
+  req: CustomRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { postId } = req.params as { postId: string };
+
+  try {
+    const post = await Post.findById(postId);
+    if (!post) {
+      return errorHandler(
+        'Post not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+
+    const existingLike = post.likes.find(
+      user => user._id.toString() === req.userId?.toString()
+    );
+    if (existingLike) {
+      return errorHandler(
+        'User already liked this post',
+        HttpStatus.CONFLICT,
+        next
+      );
+    }
+
+    post.likes.unshift(req.userId!);
+    const likedPost = await post.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully liked the post',
+      likedPost
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not like post currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err

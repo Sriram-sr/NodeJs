@@ -3,7 +3,8 @@ import {
   createPost,
   getHashtagPosts,
   getPost,
-  updatePost
+  updatePost,
+  likePost
 } from '../controllers/post-controllers';
 import {
   createPostValidator,
@@ -23,5 +24,6 @@ router
   .get(postIdValidator, getPost)
   .put(isAuth, postContentValidator, updatePost);
 router.route('/hashtag/:tag').get(getHashtagPosts);
+router.route('/:postId/like').post(isAuth, postIdValidator, likePost);
 
 export default router;
