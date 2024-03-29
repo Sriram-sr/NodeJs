@@ -18,3 +18,13 @@ export const createPostValidator: ValidationChain[] = [
     .withMessage('Title should not exceed 100 characters'),
   postContentValidator
 ];
+
+export const postCommentValidator: ValidationChain = body('text')
+  .notEmpty()
+  .withMessage('Comment text is required')
+  .isLength({ max: 200 })
+  .withMessage('Comment text should not exceed 200 characters');
+
+export const commentIdValidator: ValidationChain = param('commentId')
+  .isMongoId()
+  .withMessage('Comment Id is not a valid MongoId');

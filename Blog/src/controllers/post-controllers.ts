@@ -9,6 +9,7 @@ import Post, { PostDocument } from '../models/Post';
 import { CustomRequest } from '../middlewares/is-auth';
 import Hashtag from '../models/Hashtag';
 import User from '../models/User';
+import Comment from '../models/Comment';
 
 const createHashtag = async (content: string, post: PostDocument) => {
   const hashtags = content.match(/#[a-zA-Z0-9]+/g) || [];
@@ -32,12 +33,67 @@ const createHashtag = async (content: string, post: PostDocument) => {
   }
 };
 
-// @access  Private
-export const createPost: RequestHandler = async (
+const validatePost: RequestHandler = async (req: CustomRequest, _, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { postId } = req.params as { postId: string };
+  try {
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return errorHandler(
+        'Post not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+
+    req.post = post;
+    next();
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not perform this post action currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const validateComment: RequestHandler = async (
   req: CustomRequest,
-  res,
+  _,
   next
 ) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationErrorHandler(validationResult(req).array(), next);
+  }
+  const { commentId } = req.params as { commentId: string };
+
+  try {
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return errorHandler(
+        'Comment not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    req.comment = comment;
+    next();
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not perform this commenyt action currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @access  Private
+const createPost: RequestHandler = async (req: CustomRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
@@ -78,7 +134,7 @@ export const createPost: RequestHandler = async (
 };
 
 // @access  Public
-export const getHashtagPosts: RequestHandler = async (req, res, next) => {
+const getHashtagPosts: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
@@ -117,13 +173,14 @@ export const getHashtagPosts: RequestHandler = async (req, res, next) => {
 };
 
 // @access  Public
-export const getPost: RequestHandler = async (req, res, next) => {
+const getPost: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
   const { postId } = req.params as { postId: string };
 
   try {
+    // TODO: To use validatePost middleware and populate the data later
     const post = await Post.findById(postId).populate({
       path: 'creator',
       select: 'username -_id'
@@ -152,43 +209,27 @@ export const getPost: RequestHandler = async (req, res, next) => {
 };
 
 // @access  Private
-export const updatePost: RequestHandler = async (
-  req: CustomRequest,
-  res,
-  next
-) => {
-  if (!validationResult(req).isEmpty()) {
-    return validationErrorHandler(validationResult(req).array(), next);
-  }
+const updatePost: RequestHandler = async (req: CustomRequest, res, next) => {
   const { content } = req.body as { content: string };
-  const { postId } = req.params as { postId: string };
 
   try {
-    const post = await Post.findById(postId);
-
-    if (!post) {
-      return errorHandler(
-        'Post not found with this Id',
-        HttpStatus.NOT_FOUND,
-        next
-      );
-    }
-
-    if (post.creator._id.toString() !== req.userId?.toString()) {
+    if (req.post?.creator._id.toString() !== req.userId?.toString()) {
       return errorHandler(
         'Cannot update post created by others',
         HttpStatus.FORBIDDEN,
         next
       );
     }
-    post.content = content;
-    await createHashtag(content, post);
-    const updatedPost = await post.save();
+    if (req.post) {
+      req.post.content = content;
+      await createHashtag(content, req.post);
+      const updatedPost = await req.post.save();
 
-    res.status(HttpStatus.OK).json({
-      messsage: 'Sucessfully updated the post',
-      updatedPost
-    });
+      res.status(HttpStatus.OK).json({
+        messsage: 'Sucessfully updated the post',
+        updatedPost
+      });
+    }
   } catch (err) {
     errorHandler(
       'Something went wrong, could not update post currently',
@@ -200,27 +241,9 @@ export const updatePost: RequestHandler = async (
 };
 
 // @access  Private
-export const likePost: RequestHandler = async (
-  req: CustomRequest,
-  res,
-  next
-) => {
-  if (!validationResult(req).isEmpty()) {
-    return validationErrorHandler(validationResult(req).array(), next);
-  }
-  const { postId } = req.params as { postId: string };
-
+const likePost: RequestHandler = async (req: CustomRequest, res, next) => {
   try {
-    const post = await Post.findById(postId);
-    if (!post) {
-      return errorHandler(
-        'Post not found with this Id',
-        HttpStatus.NOT_FOUND,
-        next
-      );
-    }
-
-    const existingLike = post.likes.find(
+    const existingLike = req.post?.likes.find(
       user => user._id.toString() === req.userId?.toString()
     );
     if (existingLike) {
@@ -231,8 +254,8 @@ export const likePost: RequestHandler = async (
       );
     }
 
-    post.likes.unshift(req.userId!);
-    const likedPost = await post.save();
+    req.post?.likes.unshift(req.userId!);
+    const likedPost = await req.post?.save();
 
     res.status(HttpStatus.OK).json({
       message: 'Successfully liked the post',
@@ -246,4 +269,127 @@ export const likePost: RequestHandler = async (
       err
     );
   }
+};
+
+// @access  Private
+const unlikePost: RequestHandler = async (req: CustomRequest, res, next) => {
+  try {
+    const existingLikeIdx = req.post?.likes.findIndex(
+      user => user._id.toString() === req.userId?.toString()
+    );
+
+    if (!(existingLikeIdx! >= 0)) {
+      return errorHandler(
+        'User not already liked this post to unlike',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+
+    req.post?.likes.splice(existingLikeIdx!, 1);
+    const unlikedPost = await req.post?.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully unliked post',
+      unlikedPost
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not unlike post currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @access  Private
+const commentOnPost: RequestHandler = async (req: CustomRequest, res, next) => {
+  const { text } = req.body as { text: string };
+
+  try {
+    const comment = await Comment.create({
+      post: req.post?._id,
+      commentedBy: req.userId,
+      text,
+      likes: [],
+      replies: []
+    });
+
+    req.post?.comments.unshift(comment._id);
+    const commentedPost = await req.post?.save();
+
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully commented on post',
+      commentedPost
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not comment on post currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @acess  Private
+const likeAComment: RequestHandler = async (req: CustomRequest, res, next) => {
+  const existingLike = req.comment?.likes.find(
+    user => user._id.toString() === req.userId?.toString()
+  );
+
+  if (existingLike) {
+    return errorHandler(
+      'User already liked this comment',
+      HttpStatus.CONFLICT,
+      next
+    );
+  }
+  req.comment?.likes.unshift(req.userId!);
+  const likedComment = await req.comment?.save();
+
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully liked the comment',
+    likedComment
+  });
+};
+
+// @acess  Private
+const unlikeAComment: RequestHandler = async (
+  req: CustomRequest,
+  res,
+  next
+) => {
+  const existingLikeIdx = req.comment?.likes.findIndex(
+    user => user._id.toString() === req.userId?.toString()
+  );
+
+  if (!(existingLikeIdx! >= 0)) {
+    return errorHandler(
+      'User not liked this comment already to unlike',
+      HttpStatus.BAD_REQUEST,
+      next
+    );
+  }
+  req.comment?.likes.splice(existingLikeIdx!, 1);
+  const unlikedComment = await req.comment?.save();
+
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully unliked the comment',
+    unlikedComment
+  });
+};
+
+export {
+  validatePost,
+  createPost,
+  getHashtagPosts,
+  getPost,
+  updatePost,
+  likePost,
+  unlikePost,
+  commentOnPost,
+  likeAComment,
+  unlikeAComment
 };

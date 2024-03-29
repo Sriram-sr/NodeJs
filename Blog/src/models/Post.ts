@@ -1,5 +1,6 @@
-import { Document, Types, Schema, model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 import { UserDocument } from './User';
+import { CommentDocument } from './Comment';
 
 export interface PostDocument extends Document {
   title: string;
@@ -7,7 +8,7 @@ export interface PostDocument extends Document {
   imageUrl: string;
   creator: UserDocument;
   likes: Array<UserDocument>;
-  comments: Array<Types.ObjectId>;
+  comments: Array<CommentDocument>;
   reposts: Array<UserDocument>;
 }
 

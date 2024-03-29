@@ -3,12 +3,16 @@ import { verify } from 'jsonwebtoken';
 import { HttpStatus, errorHandler } from '../utils/error-handlers';
 import { JWTSECUREKEY } from '../utils/env-variables';
 import { UserDocument } from '../models/User';
+import { PostDocument } from '../models/Post';
+import { CommentDocument } from '../models/Comment';
 
 export interface CustomRequest extends Request {
   userId?: UserDocument;
   email?: string;
   username?: string;
   followUser?: UserDocument;
+  post?: PostDocument;
+  comment?: CommentDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: CustomRequest, _, next) => {

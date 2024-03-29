@@ -1,15 +1,23 @@
 import { Router } from 'express';
 import {
+  validatePost,
   createPost,
   getHashtagPosts,
   getPost,
   updatePost,
-  likePost
+  likePost,
+  unlikePost,
+  commentOnPost,
+  validateComment,
+  likeAComment,
+  unlikeAComment
 } from '../controllers/post-controllers';
 import {
   createPostValidator,
   postIdValidator,
-  postContentValidator
+  postContentValidator,
+  postCommentValidator,
+  commentIdValidator
 } from '../validators/post-validators';
 import isAuth from '../middlewares/is-auth';
 import imageParser from '../middlewares/image-parser';
@@ -22,8 +30,22 @@ router
 router
   .route('/:postId')
   .get(postIdValidator, getPost)
-  .put(isAuth, postContentValidator, updatePost);
+  .put(isAuth, postIdValidator, postContentValidator, validatePost, updatePost);
+router
+  .route('/:postId/like')
+  .post(isAuth, postIdValidator, validatePost, likePost);
+router
+  .route('/:postId/unlike')
+  .delete(isAuth, postIdValidator, validatePost, unlikePost);
+router
+  .route('/:postId/comment')
+  .post(isAuth, postCommentValidator, validatePost, commentOnPost);
 router.route('/hashtag/:tag').get(getHashtagPosts);
-router.route('/:postId/like').post(isAuth, postIdValidator, likePost);
+router
+  .route('/comment/:commentId/like')
+  .post(isAuth, commentIdValidator, validateComment, likeAComment);
+router
+  .route('/comment/:commentId/unlike')
+  .delete(isAuth, commentIdValidator, validateComment, unlikeAComment);
 
 export default router;

@@ -8,7 +8,7 @@ interface Reply {
   replyLikes: Array<UserDocument>;
 }
 
-interface CommentDocument extends Document {
+export interface CommentDocument extends Document {
   post: PostDocument;
   commentedBy: UserDocument;
   text: string;
