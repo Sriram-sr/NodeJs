@@ -9,7 +9,7 @@ import Post, { PostDocument } from '../models/Post';
 import { CustomRequest } from '../middlewares/is-auth';
 import Hashtag from '../models/Hashtag';
 import User from '../models/User';
-import Comment from '../models/Comment';
+import Comment, { Reply } from '../models/Comment';
 
 const createHashtag = async (content: string, post: PostDocument) => {
   const hashtags = content.match(/#[a-zA-Z0-9]+/g) || [];
@@ -209,7 +209,7 @@ const getPost: RequestHandler = async (req, res, next) => {
 };
 
 // @access  Private
-const updatePost: RequestHandler = async (req: CustomRequest, res, next) => {
+const editPost: RequestHandler = async (req: CustomRequest, res, next) => {
   const { content } = req.body as { content: string };
 
   try {
@@ -223,11 +223,11 @@ const updatePost: RequestHandler = async (req: CustomRequest, res, next) => {
     if (req.post) {
       req.post.content = content;
       await createHashtag(content, req.post);
-      const updatedPost = await req.post.save();
+      const editedPost = await req.post.save();
 
       res.status(HttpStatus.OK).json({
         messsage: 'Sucessfully updated the post',
-        updatedPost
+        editedPost
       });
     }
   } catch (err) {
@@ -238,6 +238,32 @@ const updatePost: RequestHandler = async (req: CustomRequest, res, next) => {
       err
     );
   }
+};
+
+// @access  Private
+const deletePost: RequestHandler = async (req: CustomRequest, res, next) => {
+  if (req.userId?.toString() !== req.post?.creator.toString()) {
+    return errorHandler(
+      'Cannot delete posts created by other users',
+      HttpStatus.FORBIDDEN,
+      next
+    );
+  }
+
+  const user = await User.findById(req.userId);
+  const postIdx = user?.posts.findIndex(
+    post => post._id.toString() === req.post?._id.toString()
+  );
+  if (postIdx! >= 0) {
+    user?.posts.splice(postIdx!, 1);
+    await user?.save();
+  }
+  await Comment.deleteMany({ post: req.post?._id });
+  await req.post?.deleteOne();
+
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully deleted post'
+  });
 };
 
 // @access  Private
@@ -335,24 +361,33 @@ const commentOnPost: RequestHandler = async (req: CustomRequest, res, next) => {
 
 // @acess  Private
 const likeAComment: RequestHandler = async (req: CustomRequest, res, next) => {
-  const existingLike = req.comment?.likes.find(
-    user => user._id.toString() === req.userId?.toString()
-  );
+  try {
+    const existingLike = req.comment?.likes.find(
+      user => user._id.toString() === req.userId?.toString()
+    );
 
-  if (existingLike) {
-    return errorHandler(
-      'User already liked this comment',
-      HttpStatus.CONFLICT,
-      next
+    if (existingLike) {
+      return errorHandler(
+        'User already liked this comment',
+        HttpStatus.CONFLICT,
+        next
+      );
+    }
+    req.comment?.likes.unshift(req.userId!);
+    const likedComment = await req.comment?.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully liked the comment',
+      likedComment
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not like the comment currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
     );
   }
-  req.comment?.likes.unshift(req.userId!);
-  const likedComment = await req.comment?.save();
-
-  res.status(HttpStatus.OK).json({
-    message: 'Successfully liked the comment',
-    likedComment
-  });
 };
 
 // @acess  Private
@@ -361,24 +396,62 @@ const unlikeAComment: RequestHandler = async (
   res,
   next
 ) => {
-  const existingLikeIdx = req.comment?.likes.findIndex(
-    user => user._id.toString() === req.userId?.toString()
-  );
+  try {
+    const existingLikeIdx = req.comment?.likes.findIndex(
+      user => user._id.toString() === req.userId?.toString()
+    );
 
-  if (!(existingLikeIdx! >= 0)) {
-    return errorHandler(
-      'User not liked this comment already to unlike',
-      HttpStatus.BAD_REQUEST,
-      next
+    if (!(existingLikeIdx! >= 0)) {
+      return errorHandler(
+        'User not liked this comment already to unlike',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    req.comment?.likes.splice(existingLikeIdx!, 1);
+    const unlikedComment = await req.comment?.save();
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully unliked the comment',
+      unlikedComment
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not unlike the comment currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
     );
   }
-  req.comment?.likes.splice(existingLikeIdx!, 1);
-  const unlikedComment = await req.comment?.save();
+};
 
-  res.status(HttpStatus.OK).json({
-    message: 'Successfully unliked the comment',
-    unlikedComment
-  });
+// @access  Private
+const replyToComment: RequestHandler = async (
+  req: CustomRequest,
+  res,
+  next
+) => {
+  const { text } = req.body as { text: string };
+  try {
+    const reply: Reply = {
+      repliedBy: req.userId!,
+      text: text
+    };
+    req.comment?.replies.unshift(reply);
+    const updatedComment = await req.comment?.save();
+
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully replied to the comment',
+      updatedComment
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not reply to the comment currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
 };
 
 export {
@@ -386,10 +459,12 @@ export {
   createPost,
   getHashtagPosts,
   getPost,
-  updatePost,
+  editPost,
+  deletePost,
   likePost,
   unlikePost,
   commentOnPost,
   likeAComment,
-  unlikeAComment
+  unlikeAComment,
+  replyToComment
 };

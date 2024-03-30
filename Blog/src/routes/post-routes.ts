@@ -4,13 +4,15 @@ import {
   createPost,
   getHashtagPosts,
   getPost,
-  updatePost,
+  editPost,
+  deletePost,
   likePost,
   unlikePost,
   commentOnPost,
   validateComment,
   likeAComment,
-  unlikeAComment
+  unlikeAComment,
+  replyToComment
 } from '../controllers/post-controllers';
 import {
   createPostValidator,
@@ -30,7 +32,8 @@ router
 router
   .route('/:postId')
   .get(postIdValidator, getPost)
-  .put(isAuth, postIdValidator, postContentValidator, validatePost, updatePost);
+  .put(isAuth, postIdValidator, postContentValidator, validatePost, editPost)
+  .delete(isAuth, postIdValidator, validatePost,deletePost);
 router
   .route('/:postId/like')
   .post(isAuth, postIdValidator, validatePost, likePost);
@@ -47,5 +50,8 @@ router
 router
   .route('/comment/:commentId/unlike')
   .delete(isAuth, commentIdValidator, validateComment, unlikeAComment);
+router
+  .route('/comment/:commentId/reply')
+  .post(isAuth, postCommentValidator, validateComment, replyToComment);
 
 export default router;

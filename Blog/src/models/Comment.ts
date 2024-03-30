@@ -2,10 +2,9 @@ import { Document, Schema, model } from 'mongoose';
 import { UserDocument } from './User';
 import { PostDocument } from './Post';
 
-interface Reply {
+export interface Reply {
   repliedBy: UserDocument;
   text: string;
-  replyLikes: Array<UserDocument>;
 }
 
 export interface CommentDocument extends Document {
@@ -47,13 +46,7 @@ const commentSchema = new Schema<CommentDocument>({
       text: {
         type: String,
         required: true
-      },
-      replyLikes: [
-        {
-          type: Schema.Types.ObjectId,
-          ref: 'User'
-        }
-      ]
+      }
     }
   ]
 });
