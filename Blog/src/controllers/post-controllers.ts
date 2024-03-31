@@ -8,7 +8,7 @@ import {
 import Post, { PostDocument } from '../models/Post';
 import { CustomRequest } from '../middlewares/is-auth';
 import Hashtag from '../models/Hashtag';
-import User from '../models/User';
+import User, { UserDocument } from '../models/User';
 import Comment, { Reply } from '../models/Comment';
 
 const createHashtag = async (content: string, post: PostDocument) => {
@@ -38,6 +38,7 @@ const validatePost: RequestHandler = async (req: CustomRequest, _, next) => {
     return validationErrorHandler(validationResult(req).array(), next);
   }
   const { postId } = req.params as { postId: string };
+
   try {
     const post = await Post.findById(postId);
 
@@ -110,8 +111,7 @@ const createPost: RequestHandler = async (req: CustomRequest, res, next) => {
       imageUrl,
       creator: req.userId,
       likes: [],
-      comments: [],
-      reposts: []
+      comments: []
     });
 
     await createHashtag(content, post);
@@ -173,34 +173,105 @@ const getHashtagPosts: RequestHandler = async (req, res, next) => {
 };
 
 // @access  Public
-const getPost: RequestHandler = async (req, res, next) => {
-  if (!validationResult(req).isEmpty()) {
-    return validationErrorHandler(validationResult(req).array(), next);
-  }
-  const { postId } = req.params as { postId: string };
-
+const getPost: RequestHandler = async (req: CustomRequest, res, next) => {
   try {
-    // TODO: To use validatePost middleware and populate the data later
-    const post = await Post.findById(postId).populate({
+    const post = await req.post?.populate({
       path: 'creator',
       select: 'username -_id'
     });
+    const customPost = post?.toObject();
+    customPost.likesCount = customPost.likes.length;
+    customPost.commentsCount = customPost.comments.length;
+    delete customPost.likes;
+    delete customPost.comments;
 
-    if (!post) {
-      return errorHandler(
-        'Post not found with this Id',
-        HttpStatus.NOT_FOUND,
-        next
-      );
-    }
-    // TODO Extract comments and Likes based on further requirements.
     res.status(HttpStatus.OK).json({
       messsage: 'Successfully fetched post',
-      post
+      customPost
     });
   } catch (err) {
     errorHandler(
       'Something went wrong, could not get post currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @access  Public
+const getPostLikes: RequestHandler = async (req: CustomRequest, res, next) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+  try {
+    const post = await req.post?.populate({
+      path: 'likes',
+      select: 'username -_id'
+    });
+    const likes = post?.likes.slice(skip, limit);
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched post likes',
+      likes
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get post likes currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @access  Public
+const getPostComments: RequestHandler = async (
+  req: CustomRequest,
+  res,
+  next
+) => {
+  // TODO: get comment replies route(Extract)
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+  interface CustomComment {
+    commentedBy: UserDocument;
+    text: string;
+    likes?: Array<UserDocument>;
+    likesCount?: number;
+  }
+
+  try {
+    const post = await req.post?.populate({
+      path: 'comments',
+      select: 'commentedBy text likes',
+      populate: {
+        path: 'commentedBy',
+        select: 'username -_id'
+      }
+    });
+    const postComments: Array<CustomComment> = post
+      ?.toObject()
+      .comments.map((comment: CustomComment) => {
+        const optimisedComment = {
+          ...comment,
+          likesCount: comment.likes?.length
+        };
+        delete optimisedComment.likes;
+        return optimisedComment;
+      });
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched post comments',
+      comments: postComments.slice(skip, limit)
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get post comments currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err
@@ -459,6 +530,8 @@ export {
   createPost,
   getHashtagPosts,
   getPost,
+  getPostLikes,
+  getPostComments,
   editPost,
   deletePost,
   likePost,

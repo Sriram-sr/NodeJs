@@ -4,6 +4,8 @@ import {
   createPost,
   getHashtagPosts,
   getPost,
+  getPostLikes,
+  getPostComments,
   editPost,
   deletePost,
   likePost,
@@ -31,9 +33,13 @@ router
   .post(isAuth, imageParser.single('image'), createPostValidator, createPost);
 router
   .route('/:postId')
-  .get(postIdValidator, getPost)
+  .get(postIdValidator, validatePost, getPost)
   .put(isAuth, postIdValidator, postContentValidator, validatePost, editPost)
-  .delete(isAuth, postIdValidator, validatePost,deletePost);
+  .delete(isAuth, postIdValidator, validatePost, deletePost);
+router.route('/:postId/likes').get(postIdValidator, validatePost, getPostLikes);
+router
+  .route('/:postId/comments')
+  .get(postIdValidator, validatePost, getPostComments);
 router
   .route('/:postId/like')
   .post(isAuth, postIdValidator, validatePost, likePost);

@@ -13,7 +13,6 @@ export interface UserDocument extends Document {
   profilePic: string;
   about: string;
   posts: Array<PostDocument>;
-  repostCount: number;
   following: Array<UserDocument>;
   followers: Array<UserDocument>;
   lastActivities: Array<Activity>;
@@ -48,7 +47,6 @@ const userSchema = new Schema<UserDocument>({
       ref: 'Post'
     }
   ],
-  repostCount: Number,
   following: [
     {
       type: Schema.Types.ObjectId,

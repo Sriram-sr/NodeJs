@@ -9,7 +9,6 @@ export interface PostDocument extends Document {
   creator: UserDocument;
   likes: Array<UserDocument>;
   comments: Array<CommentDocument>;
-  reposts: Array<UserDocument>;
 }
 
 const postSchema = new Schema<PostDocument>({
@@ -37,12 +36,6 @@ const postSchema = new Schema<PostDocument>({
     {
       type: Schema.Types.ObjectId,
       ref: 'Comment'
-    }
-  ],
-  reposts: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
     }
   ]
 });
