@@ -6,6 +6,7 @@ import {
   getPost,
   getPostLikes,
   getPostComments,
+  loadCommentReplies,
   editPost,
   deletePost,
   likePost,
@@ -59,5 +60,8 @@ router
 router
   .route('/comment/:commentId/reply')
   .post(isAuth, postCommentValidator, validateComment, replyToComment);
+router
+  .route('/comment/:commentId/replies')
+  .get(commentIdValidator, validateComment, loadCommentReplies);
 
 export default router;

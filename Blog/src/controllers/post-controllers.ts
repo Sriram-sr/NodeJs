@@ -233,7 +233,6 @@ const getPostComments: RequestHandler = async (
   res,
   next
 ) => {
-  // TODO: get comment replies route(Extract)
   const { page } = req.query as { page?: number };
   const currentPage = page || 1;
   const perPage = 10;
@@ -272,6 +271,35 @@ const getPostComments: RequestHandler = async (
   } catch (err) {
     errorHandler(
       'Something went wrong, could not get post comments currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+//@access  Public
+const loadCommentReplies: RequestHandler = async (
+  req: CustomRequest,
+  res,
+  next
+) => {
+  try {
+    const comment = await req.comment?.populate({
+      path: 'replies',
+      populate: {
+        path: 'repliedBy',
+        select: 'username'
+      }
+    });
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched replies',
+      replies: comment?.replies
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not load comments currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err
@@ -532,6 +560,7 @@ export {
   getPost,
   getPostLikes,
   getPostComments,
+  loadCommentReplies,
   editPost,
   deletePost,
   likePost,
