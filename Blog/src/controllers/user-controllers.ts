@@ -7,6 +7,7 @@ import {
   errorHandler,
   validationErrorHandler
 } from '../utils/error-handlers';
+import { paginateData } from './post-controllers';
 
 // @access Public
 export const getUserProfile: RequestHandler = async (req, res, next) => {
@@ -199,12 +200,6 @@ export const getFollowingUsers: RequestHandler = async (
   res,
   next
 ) => {
-  const { page } = req.query as { page?: number };
-  const currentPage = page || 1;
-  const perPage = 10;
-  const skip = (currentPage - 1) * perPage;
-  const limit = (currentPage - 1) * perPage + perPage;
-
   try {
     const user = await User.findById(req.userId)
       .select('following -_id')
@@ -215,7 +210,7 @@ export const getFollowingUsers: RequestHandler = async (
 
     res.status(HttpStatus.OK).json({
       message: 'Sucessfully fetched following users',
-      followingUsers: user?.following.slice(skip, limit)
+      followingUsers: paginateData(req, user?.following!)
     });
   } catch (err) {
     errorHandler(
@@ -233,12 +228,6 @@ export const getFollowers: RequestHandler = async (
   res,
   next
 ) => {
-  const { page } = req.query as { page?: number };
-  const currentPage = page || 1;
-  const perPage = 10;
-  const skip = (currentPage - 1) * perPage;
-  const limit = skip + perPage;
-
   try {
     const user = await User.findById(req.userId)
       .select('followers -_id')
@@ -249,7 +238,7 @@ export const getFollowers: RequestHandler = async (
 
     res.status(HttpStatus.OK).json({
       message: 'Sucessfully fetched followers',
-      followingUsers: user?.followers.slice(skip, limit)
+      followingUsers: paginateData(req, user?.followers!)
     });
   } catch (err) {
     errorHandler(
@@ -267,11 +256,6 @@ export const getSuggestedUsers: RequestHandler = async (
   res,
   next
 ) => {
-  const { page } = req.query as { page?: number };
-  const currentPage = page || 1;
-  const perPage = 10;
-  const skip = (currentPage - 1) * perPage;
-  const limit = skip + perPage;
   type IndirectFollowee = {
     _id?: UserDocument;
     username: string;
@@ -299,15 +283,29 @@ export const getSuggestedUsers: RequestHandler = async (
       });
     });
 
-    const suggestedFollowees = followersOfFollowers.filter(
+    let suggestedFollowees;
+    let isPaginated = false;
+    suggestedFollowees = followersOfFollowers.filter(
       followee =>
         !userFollowingIds?.includes(followee._id?.toString()) &&
         followee._id?.toString() !== req.userId?.toString()
     );
 
+    if (!(suggestedFollowees.length >= 1)) {
+      const [skip, limit] = paginateData(req) as [number, number];
+      suggestedFollowees = await User.find({})
+        .select('username')
+        .skip(skip)
+        .limit(limit);
+      isPaginated = true;
+    }
+
+    if (!isPaginated)
+      suggestedFollowees = paginateData(req, suggestedFollowees);
+
     res.status(HttpStatus.OK).json({
       message: 'Successfully fetched suggested followees',
-      suggestedFollowees: suggestedFollowees.slice(skip, limit)
+      suggestedFollowees
     });
   } catch (err) {
     errorHandler(
@@ -318,4 +316,3 @@ export const getSuggestedUsers: RequestHandler = async (
     );
   }
 };
-

@@ -1,4 +1,4 @@
-import { RequestHandler } from 'express';
+import { RequestHandler, Request } from 'express';
 import { validationResult } from 'express-validator';
 import {
   HttpStatus,
@@ -33,7 +33,11 @@ const createHashtag = async (content: string, post: PostDocument) => {
   }
 };
 
-const validatePost: RequestHandler = async (req: CustomRequest, _, next) => {
+export const validatePost: RequestHandler = async (
+  req: CustomRequest,
+  _,
+  next
+) => {
   if (!validationResult(req).isEmpty()) {
     return validationErrorHandler(validationResult(req).array(), next);
   }
@@ -60,6 +64,20 @@ const validatePost: RequestHandler = async (req: CustomRequest, _, next) => {
       err
     );
   }
+};
+
+export const paginateData = (req: Request, array?: any[]) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+
+  if (array && array.length >= 1) {
+    return array.slice(skip, limit);
+  }
+
+  return [skip, perPage];
 };
 
 export const validateComment: RequestHandler = async (
@@ -201,21 +219,15 @@ const getPost: RequestHandler = async (req: CustomRequest, res, next) => {
 
 // @access  Public
 const getPostLikes: RequestHandler = async (req: CustomRequest, res, next) => {
-  const { page } = req.query as { page?: number };
-  const currentPage = page || 1;
-  const perPage = 10;
-  const skip = (currentPage - 1) * perPage;
-  const limit = skip + perPage;
   try {
     const post = await req.post?.populate({
       path: 'likes',
       select: 'username -_id'
     });
-    const likes = post?.likes.slice(skip, limit);
 
     res.status(HttpStatus.OK).json({
       message: 'Successfully fetched post likes',
-      likes
+      likes: paginateData(req, post?.likes!)
     });
   } catch (err) {
     errorHandler(
@@ -233,11 +245,6 @@ const getPostComments: RequestHandler = async (
   res,
   next
 ) => {
-  const { page } = req.query as { page?: number };
-  const currentPage = page || 1;
-  const perPage = 10;
-  const skip = (currentPage - 1) * perPage;
-  const limit = skip + perPage;
   interface CustomComment {
     commentedBy: UserDocument;
     text: string;
@@ -266,7 +273,7 @@ const getPostComments: RequestHandler = async (
       });
     res.status(HttpStatus.OK).json({
       message: 'Successfully fetched post comments',
-      comments: postComments.slice(skip, limit)
+      comments: paginateData(req, postComments)
     });
   } catch (err) {
     errorHandler(
@@ -279,6 +286,7 @@ const getPostComments: RequestHandler = async (
 };
 
 //@access  Public
+// TODO: Test in postman
 const loadCommentReplies: RequestHandler = async (
   req: CustomRequest,
   res,
@@ -295,7 +303,7 @@ const loadCommentReplies: RequestHandler = async (
 
     res.status(HttpStatus.OK).json({
       message: 'Successfully fetched replies',
-      replies: comment?.replies
+      replies: paginateData(req, comment?.replies!)
     });
   } catch (err) {
     errorHandler(
@@ -554,7 +562,6 @@ const replyToComment: RequestHandler = async (
 };
 
 export {
-  validatePost,
   createPost,
   getHashtagPosts,
   getPost,
