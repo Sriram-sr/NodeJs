@@ -1,7 +1,7 @@
 import { Document, Schema, model } from 'mongoose';
 import { PostDocument } from './Post';
 
-interface Activity {
+export interface Activity {
   activity: string;
   post: PostDocument;
 }

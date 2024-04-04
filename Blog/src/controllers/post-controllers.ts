@@ -10,6 +10,7 @@ import { CustomRequest } from '../middlewares/is-auth';
 import Hashtag from '../models/Hashtag';
 import User, { UserDocument } from '../models/User';
 import Comment, { Reply } from '../models/Comment';
+import { clearUserActivity } from './user-controllers';
 
 const createHashtag = async (content: string, post: PostDocument) => {
   const hashtags = content.match(/#[a-zA-Z0-9]+/g) || [];
@@ -135,7 +136,10 @@ const createPost: RequestHandler = async (req: CustomRequest, res, next) => {
     await createHashtag(content, post);
     const user = await User.findById(req.userId);
     user?.posts.unshift(post._id);
-    await user?.save();
+    await clearUserActivity(user!, {
+      activity: `${user?.username} created a post on ${new Date()}}`,
+      post: post._id
+    });
 
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created post',
@@ -390,6 +394,12 @@ const likePost: RequestHandler = async (req: CustomRequest, res, next) => {
     req.post?.likes.unshift(req.userId!);
     const likedPost = await req.post?.save();
 
+    const user = await User.findById(req.userId);
+    clearUserActivity(user!, {
+      activity: `${user?.username} likes this post`,
+      post: req.post?._id
+    });
+
     res.status(HttpStatus.OK).json({
       message: 'Successfully liked the post',
       likedPost
@@ -451,6 +461,12 @@ const commentOnPost: RequestHandler = async (req: CustomRequest, res, next) => {
 
     req.post?.comments.unshift(comment._id);
     const commentedPost = await req.post?.save();
+
+    const user = await User.findById(req.userId);
+    clearUserActivity(user!, {
+      activity: `${user?.username} commented on this post`,
+      post: req.post?._id
+    });
 
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully commented on post',

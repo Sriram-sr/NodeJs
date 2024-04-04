@@ -1,13 +1,24 @@
 import { RequestHandler } from 'express';
 import { validationResult } from 'express-validator';
 import { CustomRequest } from '../middlewares/is-auth';
-import User, { UserDocument } from '../models/User';
+import User, { Activity, UserDocument } from '../models/User';
 import {
   HttpStatus,
   errorHandler,
   validationErrorHandler
 } from '../utils/error-handlers';
 import { paginateData } from './post-controllers';
+
+export const clearUserActivity = async (
+  user: UserDocument,
+  activity: Activity
+) => {
+  if (user.lastActivities.length >= 5) {
+    user.lastActivities.splice(4, 1);
+  }
+  user.lastActivities.unshift(activity);
+  await user.save();
+};
 
 // @access Public
 export const getUserProfile: RequestHandler = async (req, res, next) => {
