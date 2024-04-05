@@ -290,7 +290,6 @@ const getPostComments: RequestHandler = async (
 };
 
 //@access  Public
-// TODO: Test in postman
 const loadCommentReplies: RequestHandler = async (
   req: CustomRequest,
   res,

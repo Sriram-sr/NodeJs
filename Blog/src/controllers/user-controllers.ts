@@ -30,7 +30,7 @@ export const getUserProfile: RequestHandler = async (req, res, next) => {
   try {
     const profile = await User.findById(userId).select(
       'username email profilePic about'
-    ); // TODO more fields to get and populate
+    );
 
     if (!profile) {
       return errorHandler(

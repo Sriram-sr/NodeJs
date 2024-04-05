@@ -5,7 +5,7 @@ import postRouter from './routes/post-routes';
 
 const router = Router();
 
-router.use('/auth', authRouter); // TODO Strong Authentication
+router.use('/auth', authRouter);
 router.use('/post', postRouter);
 router.use('/user', userRouter);
 
