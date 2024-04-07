@@ -13,8 +13,11 @@ export interface UserDocument extends Document {
   profilePic: string;
   about: string;
   posts: Array<PostDocument>;
+  postsCount?: number;
   following: Array<UserDocument>;
+  followingCount?: number;
   followers: Array<UserDocument>;
+  followersCount?: number;
   lastActivities: Array<Activity>;
 }
 

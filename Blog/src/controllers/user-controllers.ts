@@ -28,9 +28,17 @@ export const getUserProfile: RequestHandler = async (req, res, next) => {
   const { userId } = req.params as { userId: string };
 
   try {
-    const profile = await User.findById(userId).select(
-      'username email profilePic about'
-    );
+    const profile = await User.findById(userId)
+      .select(
+        'username email profilePic about posts following followers lastActivities'
+      )
+      .lean();
+
+    const { posts, followers, following, ...customProfile } =
+      profile as UserDocument;
+    customProfile.postsCount = profile?.posts.length;
+    customProfile.followersCount = profile?.followers.length;
+    customProfile.followingCount = profile?.following.length;
 
     if (!profile) {
       return errorHandler(
@@ -41,7 +49,7 @@ export const getUserProfile: RequestHandler = async (req, res, next) => {
     }
     res.status(HttpStatus.OK).json({
       message: 'Successfully fetched User profile',
-      profile
+      customProfile
     });
   } catch (err) {
     errorHandler(
