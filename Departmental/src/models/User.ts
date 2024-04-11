@@ -5,7 +5,7 @@ import { OrderDocument } from './Order';
 import { sign } from 'jsonwebtoken';
 import { JWTSECUREKEY } from '../utils/env-variables';
 
-type UserRole = 'admin' | 'staff' | 'customer';
+export type UserRole = 'admin' | 'staff' | 'customer';
 
 interface CartProduct {
   product: ProductDocument;
@@ -96,7 +96,7 @@ const userSchema = new Schema<UserDocument>({
 });
 
 userSchema.methods.getJwtToken = function (expiry: string): string {
-  return sign({ userId: this._id }, JWTSECUREKEY, {
+  return sign({ userId: this._id, role: this.role }, JWTSECUREKEY, {
     expiresIn: expiry
   });
 };

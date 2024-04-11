@@ -2,11 +2,16 @@ import { Document, Schema, model } from 'mongoose';
 
 interface CounterDocument extends Document {
   modelName: string;
+  fieldName: string;
   count: number;
 }
 
 const counterSchema = new Schema<CounterDocument>({
   modelName: {
+    type: String,
+    required: true
+  },
+  fieldName: {
     type: String,
     required: true
   },
@@ -18,10 +23,13 @@ const counterSchema = new Schema<CounterDocument>({
 
 const Counter = model<CounterDocument>('Counter', counterSchema);
 
-export const initializeCounter = async (modelName: string) => {
-  const existingCounter = await Counter.findOne({ modelName: modelName });
+export const initializeCounter = async (modelName: string, field: string) => {
+  const existingCounter = await Counter.findOne({
+    modelName: modelName,
+    fieldName: field
+  });
 
   if (!existingCounter) {
-    const counter = await Counter.create({ modelName: modelName, count: 1 });
+    await Counter.create({ modelName: modelName, fieldName: field, count: 1 });
   }
 };

@@ -2,10 +2,11 @@ import { Request, RequestHandler } from 'express';
 import { HttpStatus, errorHandler } from '../utils/error-handlers';
 import { verify, TokenExpiredError } from 'jsonwebtoken';
 import { JWTSECUREKEY } from '../utils/env-variables';
-import { UserDocument } from '../models/User';
+import { UserDocument, UserRole } from '../models/User';
 
 export interface customRequest extends Request {
   userId?: UserDocument;
+  role?: UserRole;
 }
 
 const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
@@ -27,8 +28,12 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
         next
       );
     }
-    const { userId } = decodedToken as { userId: UserDocument };
+    const { userId, role } = decodedToken as {
+      userId: UserDocument;
+      role: UserRole;
+    };
     req.userId = userId;
+    req.role = role;
     next();
   } catch (err) {
     if (err instanceof TokenExpiredError) {

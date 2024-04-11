@@ -4,6 +4,7 @@ import logger from 'morgan';
 import { MONGODB_URI, PORT } from './utils/env-variables';
 import Router from './routes';
 import { HttpError, HttpStatus } from './utils/error-handlers';
+import { initializeCounter } from './middlewares/mongoose-counter';
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use((error: HttpError, _: Request, res: Response, _1: NextFunction) => {
 connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to mongodb...');
+    initializeCounter('Product', 'productId');
     app.listen(PORT);
   })
   .catch(err => {
