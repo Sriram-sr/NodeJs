@@ -96,7 +96,7 @@ const userSchema = new Schema<UserDocument>({
 });
 
 userSchema.methods.getJwtToken = function (expiry: string): string {
-  return sign({ _id: this._id, email: this.email }, JWTSECUREKEY, {
+  return sign({ userId: this._id }, JWTSECUREKEY, {
     expiresIn: expiry
   });
 };
