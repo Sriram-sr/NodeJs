@@ -2,6 +2,10 @@ import { Document, Schema, model } from 'mongoose';
 import { ProductDocument } from './Product';
 import { BillTransactionDocument } from './BillTransaction';
 import { OrderDocument } from './Order';
+import { sign } from 'jsonwebtoken';
+import { JWTSECUREKEY } from '../utils/env-variables';
+
+type UserRole = 'admin' | 'staff' | 'customer';
 
 interface CartProduct {
   product: ProductDocument;
@@ -16,6 +20,7 @@ export interface UserDocument extends Document {
   email: string;
   mobile: string;
   password: string;
+  role: UserRole;
   bonusPoints?: number;
   shoppingCart?: {
     products: Array<CartProduct>;
@@ -25,6 +30,7 @@ export interface UserDocument extends Document {
   shoppingHistory?: Array<BillTransactionDocument | OrderDocument>;
   resetToken?: string;
   resetTokenExpiry?: Date;
+  getJwtToken: (expiry: string) => string;
 }
 
 const userSchema = new Schema<UserDocument>({
@@ -39,6 +45,10 @@ const userSchema = new Schema<UserDocument>({
     required: true
   },
   password: {
+    type: String,
+    required: true
+  },
+  role: {
     type: String,
     required: true
   },
@@ -84,5 +94,13 @@ const userSchema = new Schema<UserDocument>({
   resetToken: String,
   resetTokenExpiry: Date
 });
+
+userSchema.methods.getJwtToken = function (expiry: string): string {
+  return sign({ _id: this._id, email: this.email }, JWTSECUREKEY, {
+    expiresIn: expiry
+  });
+};
+
+userSchema.methods.generateRefreshToken = function () {};
 
 export default model<UserDocument>('User', userSchema);
