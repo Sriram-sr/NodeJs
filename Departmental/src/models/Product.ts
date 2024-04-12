@@ -1,4 +1,4 @@
-import { Document, Schema, Types, model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 import { UserDocument } from './User';
 
 interface Rating {
@@ -6,16 +6,19 @@ interface Rating {
   rating: number;
 }
 
-export interface ProductDocument extends Document {
-  productId: number;
+export interface ProductInput {
   productName: string;
   description: string;
-  category: Types.ObjectId;
-  imageUrl?: string;
+  category: string;
   unit: string;
-  noOfUnits: number;
-  pricePerUnit: number;
+  unitsLeft: number;
+  price: number;
   expiryDate: Date;
+}
+
+export interface ProductDocument extends Document, ProductInput {
+  productId: number;
+  imageUrl?: string;
   ratings?: Array<Rating>;
 }
 
@@ -33,8 +36,7 @@ const productSchema = new Schema<ProductDocument>({
     required: true
   },
   category: {
-    type: Schema.Types.ObjectId,
-    ref: 'Category',
+    type: String,
     required: true
   },
   imageUrl: String,
@@ -42,12 +44,12 @@ const productSchema = new Schema<ProductDocument>({
     type: String,
     required: true
   },
-  noOfUnits: {
+  unitsLeft: {
     type: Number,
     default: 0,
     required: true
   },
-  pricePerUnit: {
+  price: {
     type: Number,
     required: true
   },

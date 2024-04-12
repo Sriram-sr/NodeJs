@@ -3,13 +3,15 @@ import { HttpStatus, errorHandler } from '../utils/error-handlers';
 import { verify, TokenExpiredError } from 'jsonwebtoken';
 import { JWTSECUREKEY } from '../utils/env-variables';
 import { UserDocument, UserRole } from '../models/User';
+import { CategoryDocument } from '../models/Category';
 
 export interface customRequest extends Request {
   userId?: UserDocument;
   role?: UserRole;
+  category?: CategoryDocument;
 }
 
-const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
+export const isAuth: RequestHandler = (req: customRequest, _, next) => {
   const [bearer, token] = req.headers.authorization?.split(' ') || [];
   if (!bearer || !token || bearer !== 'Bearer') {
     return errorHandler(
@@ -48,4 +50,13 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
   }
 };
 
-export default isAuthenticated;
+export const isAdmin: RequestHandler = (req: customRequest, _, next) => {
+  if (req.role !== 'admin') {
+    return errorHandler(
+      'Only admin can access this route',
+      HttpStatus.FORBIDDEN,
+      next
+    );
+  }
+  next();
+};

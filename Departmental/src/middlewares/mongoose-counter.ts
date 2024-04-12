@@ -21,7 +21,7 @@ const counterSchema = new Schema<CounterDocument>({
   }
 });
 
-const Counter = model<CounterDocument>('Counter', counterSchema);
+export const Counter = model<CounterDocument>('Counter', counterSchema);
 
 export const initializeCounter = async (modelName: string, field: string) => {
   const existingCounter = await Counter.findOne({
@@ -30,6 +30,6 @@ export const initializeCounter = async (modelName: string, field: string) => {
   });
 
   if (!existingCounter) {
-    await Counter.create({ modelName: modelName, fieldName: field, count: 1 });
+    await Counter.create({ modelName: modelName, fieldName: field, count: 0 });
   }
 };

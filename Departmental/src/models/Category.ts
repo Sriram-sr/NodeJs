@@ -1,7 +1,7 @@
 import { Document, Schema, model } from 'mongoose';
 import { ProductDocument } from './Product';
 
-interface CategoryDocument extends Document {
+export interface CategoryDocument extends Document {
   categoryName: string;
   products?: Array<ProductDocument>;
 }

@@ -1,22 +1,21 @@
 import { RequestHandler } from 'express';
-import { HttpStatus, errorHandler } from '../utils/error-handlers';
+import { validationResult } from 'express-validator';
+import {
+  HttpStatus,
+  errorHandler,
+  validationHandler
+} from '../utils/error-handlers';
 import Category from '../models/Category';
 import { customRequest } from '../middlewares/is-auth';
+import Product, { ProductInput } from '../models/Product';
+import { Counter } from '../middlewares/mongoose-counter';
 
 export const addCategory: RequestHandler = async (
   req: customRequest,
   res,
   next
 ) => {
-  if (req.role !== 'admin') {
-    return errorHandler(
-      'Only admin can add product categories',
-      HttpStatus.FORBIDDEN,
-      next
-    );
-  }
   let { category: categoryName } = req.body as { category: string };
-  console.log(categoryName);
   categoryName =
     categoryName.trim().charAt(0).toUpperCase() + categoryName.trim().slice(1);
   const existingCategory = await Category.findOne({
@@ -36,15 +35,74 @@ export const addCategory: RequestHandler = async (
       next
     );
   }
-  const category = await Category.create({
-    categoryName:
-      categoryName.trim().charAt(0).toUpperCase() +
-      categoryName.trim().slice(1),
-    products: []
-  });
+  try {
+    const category = await Category.create({
+      categoryName:
+        categoryName.trim().charAt(0).toUpperCase() +
+        categoryName.trim().slice(1),
+      products: []
+    });
 
-  res.status(HttpStatus.CREATED).json({
-    message: 'Successfuly created a product category',
-    category
-  });
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfuly created a product category',
+      category
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add category currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const addProduct: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { productName, description, unit, unitsLeft, price, expiryDate } =
+    req.body as ProductInput;
+  try {
+    const productCounter = await Counter.findOneAndUpdate(
+      {
+        modelName: 'Product',
+        fieldName: 'productId'
+      },
+      { $inc: { count: 1 } },
+      { new: true }
+    );
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = req.file.path;
+    }
+    const product = await Product.create({
+      productId: productCounter?.count,
+      productName,
+      description,
+      category: req.category?.categoryName,
+      imageUrl,
+      unit,
+      unitsLeft,
+      price,
+      expiryDate
+    });
+    req.category?.products?.push(product._id);
+    await req.category?.save();
+    res.status(HttpStatus.CREATED).json({
+      message: 'Succesfully added a product',
+      product
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add product currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
 };
