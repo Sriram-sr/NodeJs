@@ -70,6 +70,8 @@ const productSchema = new Schema<ProductDocument>({
       }
     }
   ]
+}, {
+  timestamps: true
 });
 
 export default model<ProductDocument>('Product', productSchema);

@@ -77,6 +77,8 @@ const orderSchema = new Schema<OrderDocument>({
       required: true
     }
   }
+}, {
+  timestamps: true
 });
 
 export default model<OrderDocument>('Order', orderSchema);

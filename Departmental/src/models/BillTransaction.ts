@@ -41,6 +41,8 @@ const billTransactionSchema = new Schema<BillTransactionDocument>({
     type: Number,
     required: true
   }
+}, {
+  timestamps: true
 });
 
 export default model<BillTransactionDocument>(
