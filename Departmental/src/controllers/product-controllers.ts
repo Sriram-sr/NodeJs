@@ -106,3 +106,68 @@ export const addProduct: RequestHandler = async (
     );
   }
 };
+
+export const getProduct: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { productId } = req.params as { productId: string };
+
+  try {
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorHandler(
+        'Product not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched product',
+      product
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get product currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const updateProduct: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { productId } = req.params as { productId: string };
+
+  const updatedProduct = await Product.findByIdAndUpdate(productId, req.body, {
+    new: true
+  });
+
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully updated product',
+    updatedProduct
+  });
+};
+
+export const deleteProduct: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { productId } = req.params as { productId: string };
+
+  const product = await Product.findById(productId);
+  if (!product) {
+    return errorHandler(
+      'Product not found with this Id',
+      HttpStatus.NOT_FOUND,
+      next
+    );
+  }
+  await product.deleteOne();
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully deleted product'
+  });
+};

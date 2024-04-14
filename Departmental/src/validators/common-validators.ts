@@ -1,4 +1,4 @@
-import { ValidationChain, body } from 'express-validator';
+import { ValidationChain, body, param } from 'express-validator';
 import Category from '../models/Category';
 
 export const addProductValidator: ValidationChain[] = [
@@ -44,4 +44,40 @@ export const addProductValidator: ValidationChain[] = [
     .withMessage('Expiry date is required')
     .isDate()
     .withMessage('Enter a valid date')
+];
+
+export const productIdValidator: ValidationChain = param('productId')
+  .isMongoId()
+  .withMessage('Enter a valid Mongo Id');
+
+export const updateProductvalidator: ValidationChain[] = [
+  body('productName')
+    .optional()
+    .isLength({ min: 5, max: 50 })
+    .withMessage('Product name should not exceed 5 to 50 characters'),
+  body('description')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Description should not exceed 500 characters'),
+  body('category')
+    .optional()
+    .isMongoId()
+    .withMessage('Category should be a mongo Id')
+    .custom(async (categoryId: string, { req }) => {
+      const validCategory = await Category.findById(categoryId);
+      if (!validCategory) {
+        throw new Error('Enter a valid category Id');
+      }
+      req.category = validCategory;
+    }),
+  body('unit')
+    .optional()
+    .isIn(['litres', 'kilograms', 'number'])
+    .withMessage('Enter a valid unit'),
+  body('unitsLeft')
+    .optional()
+    .isNumeric()
+    .withMessage('Units left value should be an integer'),
+  body('price').optional().isInt().withMessage('Price should be an integer'),
+  body('expiryDate').optional().isDate().withMessage('Enter a valid date')
 ];

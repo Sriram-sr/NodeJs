@@ -1,8 +1,18 @@
 import { Router } from 'express';
 import { isAuth, isAdmin } from '../middlewares/is-auth';
-import { addProductValidator } from '../validators/common-validators';
+import {
+  addProductValidator,
+  productIdValidator,
+  updateProductvalidator
+} from '../validators/common-validators';
 import imageParser from '../middlewares/image-parser';
-import { addCategory, addProduct } from '../controllers/product-controllers';
+import {
+  addCategory,
+  addProduct,
+  deleteProduct,
+  getProduct,
+  updateProduct
+} from '../controllers/product-controllers';
 
 const router = Router();
 
@@ -16,5 +26,10 @@ router
     addProductValidator,
     addProduct
   );
+router
+  .route('/:productId')
+  .get(productIdValidator, getProduct)
+  .patch(isAuth, isAdmin, updateProductvalidator, updateProduct)
+  .delete(isAuth, isAdmin, productIdValidator, deleteProduct);
 
 export default router;

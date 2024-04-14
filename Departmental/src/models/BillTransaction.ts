@@ -3,18 +3,12 @@ import { UserDocument } from './User';
 import { OrderItem } from './Order';
 
 export interface BillTransactionDocument extends Document {
-  staff: UserDocument;
   customer: UserDocument;
   items: Array<OrderItem>;
   totalPrice: number;
 }
 
 const billTransactionSchema = new Schema<BillTransactionDocument>({
-  staff: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
   customer: {
     type: Schema.Types.ObjectId,
     ref: 'User',
