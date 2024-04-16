@@ -11,6 +11,7 @@ import {
   addProduct,
   deleteProduct,
   getProduct,
+  rateProduct,
   updateProduct
 } from '../controllers/product-controllers';
 
@@ -31,5 +32,6 @@ router
   .get(productIdValidator, getProduct)
   .patch(isAuth, isAdmin, updateProductvalidator, updateProduct)
   .delete(isAuth, isAdmin, productIdValidator, deleteProduct);
+  router.route('/:productId/rating').post(isAuth, rateProduct);
 
 export default router;

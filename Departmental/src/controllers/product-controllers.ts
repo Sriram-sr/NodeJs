@@ -142,14 +142,26 @@ export const updateProduct: RequestHandler = async (req, res, next) => {
   }
   const { productId } = req.params as { productId: string };
 
-  const updatedProduct = await Product.findByIdAndUpdate(productId, req.body, {
-    new: true
-  });
-
-  res.status(HttpStatus.OK).json({
-    message: 'Successfully updated product',
-    updatedProduct
-  });
+  try {
+    const updatedProduct = await Product.findByIdAndUpdate(
+      productId,
+      req.body,
+      {
+        new: true
+      }
+    );
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully updated product',
+      updatedProduct
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not update the product currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
 };
 
 export const deleteProduct: RequestHandler = async (req, res, next) => {
@@ -158,16 +170,88 @@ export const deleteProduct: RequestHandler = async (req, res, next) => {
   }
   const { productId } = req.params as { productId: string };
 
-  const product = await Product.findById(productId);
-  if (!product) {
+  try {
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorHandler(
+        'Product not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    await product.deleteOne();
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully deleted product'
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not delete the product currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const rateProduct: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { productId } = req.params as { productId: string };
+  const { ratings } = req.body as { ratings: number };
+  if (!ratings) {
     return errorHandler(
-      'Product not found with this Id',
-      HttpStatus.NOT_FOUND,
+      'Ratings is required',
+      HttpStatus.UNPROCESSABLE_ENTITY,
       next
     );
   }
-  await product.deleteOne();
-  res.status(HttpStatus.OK).json({
-    message: 'Successfully deleted product'
-  });
+  if (ratings < 0 || ratings > 5) {
+    return errorHandler(
+      'Ratings value should be within 0.1 to 5',
+      HttpStatus.UNPROCESSABLE_ENTITY,
+      next
+    );
+  }
+
+  try {
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorHandler(
+        'Product not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+
+    const existingRating = product.ratings?.find(
+      rating => rating.user.toString() === req.userId!.toString()
+    );
+    if (existingRating) {
+      return errorHandler(
+        'User already provided ratings for the product',
+        HttpStatus.CONFLICT,
+        next
+      );
+    }
+
+    product.ratings?.push({ user: req.userId!, rating: ratings });
+    const overallRating =
+      product.ratings!.reduce((sum, rating) => sum + rating.rating, 0) /
+      product.ratings!.length;
+    product.overallRating = overallRating;
+    const updatedProduct = await product.save();
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully provided ratings for the product',
+      updatedProduct
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not provide ratings currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
 };
