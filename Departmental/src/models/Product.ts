@@ -23,6 +23,19 @@ export interface ProductDocument extends Document, ProductInput {
   ratings?: Array<Rating>;
 }
 
+export interface ProductQuery {
+  productName: string;
+  category: string;
+  productId: number;
+  unitsStart: number;
+  unitsEnd: number;
+  priceStart: number;
+  priceEnd: number;
+  ratingStart: number;
+  ratingEnd: number;
+  page: number;
+}
+
 const productSchema = new Schema<ProductDocument>(
   {
     productId: {

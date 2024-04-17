@@ -1,4 +1,4 @@
-import { ValidationChain, body, param } from 'express-validator';
+import { ValidationChain, body, param, query } from 'express-validator';
 import Category from '../models/Category';
 
 export const addProductValidator: ValidationChain[] = [
@@ -80,4 +80,37 @@ export const updateProductvalidator: ValidationChain[] = [
     .withMessage('Units left value should be an integer'),
   body('price').optional().isInt().withMessage('Price should be an integer'),
   body('expiryDate').optional().isDate().withMessage('Enter a valid date')
+];
+
+export const getProductsValidator: ValidationChain[] = [
+  query('productName')
+    .optional()
+    .isLength({ max: 50 })
+    .withMessage('Product name should not exceed 50 characters'),
+  query('unitsStart')
+    .optional()
+    .isInt()
+    .withMessage('Units left start value should be a integer'),
+  query('unitsEnd')
+    .optional()
+    .isInt()
+    .withMessage('Units left end value should be a integer'),
+  query('priceStart')
+    .optional()
+    .isInt()
+    .withMessage('Price start value should be an integer'),
+  query('priceEnd')
+    .optional()
+    .isInt()
+    .withMessage('Price end value should be an integer'),
+  query('ratingStart')
+    .optional()
+    .isInt({ max: 4, min: 1 })
+    .withMessage(
+      'Rating start value should be an integer within 0.1 to 4 only'
+    ),
+  query('ratingEnd')
+    .optional()
+    .isInt({ max: 5, min: 1 })
+    .withMessage('Rating start value should be an integer within 1 to 5 only')
 ];

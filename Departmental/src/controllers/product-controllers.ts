@@ -7,7 +7,7 @@ import {
 } from '../utils/error-handlers';
 import Category from '../models/Category';
 import { customRequest } from '../middlewares/is-auth';
-import Product, { ProductInput } from '../models/Product';
+import Product, { ProductInput, ProductQuery } from '../models/Product';
 import { Counter } from '../middlewares/mongoose-counter';
 
 export const addCategory: RequestHandler = async (
@@ -55,6 +55,58 @@ export const addCategory: RequestHandler = async (
       err
     );
   }
+};
+
+export const getProducts: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const {
+    productName,
+    category,
+    productId,
+    unitsStart,
+    unitsEnd,
+    priceStart,
+    priceEnd,
+    ratingStart,
+    ratingEnd,
+    page
+  } = req.query as Partial<ProductQuery>;
+  const currentPage = page || 1;
+  const perPage = 10;
+
+  let filters: any = {};
+  if (productName)
+    filters = { productName: { $regex: productName, $options: 'i' } };
+  if (category) filters = { ...filters, category: category };
+  if (productId) filters = { ...filters, productId: productId };
+  if (unitsStart || unitsEnd) {
+    let units = {};
+    if (unitsStart) units = { $gte: unitsStart };
+    if (unitsEnd) units = { ...units, $lte: unitsEnd };
+    filters = { ...filters, unitsLeft: units };
+  }
+  if (priceStart || priceEnd) {
+    let price = {};
+    if (priceStart) price = { $gte: priceStart };
+    if (priceEnd) price = { ...price, $lte: priceEnd };
+    filters = { ...filters, price: price };
+  }
+  if (ratingStart || ratingEnd) {
+    let rating = {};
+    if (ratingStart) rating = { $gte: ratingStart };
+    if (ratingEnd) rating = { ...rating, $lte: ratingEnd };
+    filters = { ...filters, overallRating: rating };
+  }
+
+  const products = await Product.find(filters)
+    .skip((currentPage - 1) * perPage)
+    .limit(perPage);
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully fetched products',
+    products
+  });
 };
 
 export const addProduct: RequestHandler = async (
@@ -107,7 +159,7 @@ export const addProduct: RequestHandler = async (
   }
 };
 
-export const getProduct: RequestHandler = async (req, res, next) => {
+export const getSingleProduct: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
