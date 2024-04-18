@@ -14,12 +14,13 @@ import {
   deleteProduct,
   getSingleProduct,
   rateProduct,
-  updateProduct
+  updateProduct,
+  getCategories
 } from '../controllers/product-controllers';
 
 const router = Router();
 
-router.route('/category').post(isAuth, isAdmin, addCategory);
+router.route('/category').get(getCategories).post(isAuth, isAdmin, addCategory);
 router
   .route('/')
   .get(getProductsValidator, getProducts)

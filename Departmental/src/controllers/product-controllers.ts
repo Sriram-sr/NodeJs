@@ -10,6 +10,31 @@ import { customRequest } from '../middlewares/is-auth';
 import Product, { ProductInput, ProductQuery } from '../models/Product';
 import { Counter } from '../middlewares/mongoose-counter';
 
+export const getCategories: RequestHandler = async (req, res, next) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+
+  try {
+    const categories = await Category.find()
+      .select('categoryName -_id')
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched product categories',
+      categories
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get categories currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export const addCategory: RequestHandler = async (
   req: customRequest,
   res,
@@ -71,7 +96,8 @@ export const getProducts: RequestHandler = async (req, res, next) => {
     priceEnd,
     ratingStart,
     ratingEnd,
-    page
+    page,
+    billSearch
   } = req.query as Partial<ProductQuery>;
   const currentPage = page || 1;
   const perPage = 10;
@@ -82,31 +108,48 @@ export const getProducts: RequestHandler = async (req, res, next) => {
   if (category) filters = { ...filters, category: category };
   if (productId) filters = { ...filters, productId: productId };
   if (unitsStart || unitsEnd) {
-    let units = {};
-    if (unitsStart) units = { $gte: unitsStart };
-    if (unitsEnd) units = { ...units, $lte: unitsEnd };
+    let units: { $gte?: number; $lte?: number } = {};
+    if (unitsStart) units.$gte = unitsStart;
+    if (unitsEnd) units.$lte = unitsEnd;
     filters = { ...filters, unitsLeft: units };
   }
   if (priceStart || priceEnd) {
-    let price = {};
-    if (priceStart) price = { $gte: priceStart };
-    if (priceEnd) price = { ...price, $lte: priceEnd };
+    let price: { $gte?: number; $lte?: number } = {};
+    if (priceStart) price.$gte = priceStart;
+    if (priceEnd) price.$lte = priceEnd;
     filters = { ...filters, price: price };
   }
   if (ratingStart || ratingEnd) {
-    let rating = {};
-    if (ratingStart) rating = { $gte: ratingStart };
-    if (ratingEnd) rating = { ...rating, $lte: ratingEnd };
+    let rating: { $gte?: number; $lte?: number } = {};
+    if (ratingStart) rating.$gte = ratingStart;
+    if (ratingEnd) rating.$lte = ratingEnd;
     filters = { ...filters, overallRating: rating };
   }
-
-  const products = await Product.find(filters)
-    .skip((currentPage - 1) * perPage)
-    .limit(perPage);
-  res.status(HttpStatus.OK).json({
-    message: 'Successfully fetched products',
-    products
-  });
+  console.log(filters);
+  try {
+    let products;
+    if (billSearch === 'true') {
+      products = await Product.find(filters)
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+    } else {
+      console.log('Landing page query');
+      products = await Product.find(filters)
+        .skip((currentPage - 1) * perPage)
+        .limit(perPage);
+    }
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched products',
+      products
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get products currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
 };
 
 export const addProduct: RequestHandler = async (

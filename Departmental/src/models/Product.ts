@@ -34,6 +34,7 @@ export interface ProductQuery {
   ratingStart: number;
   ratingEnd: number;
   page: number;
+  billSearch: string;
 }
 
 const productSchema = new Schema<ProductDocument>(
