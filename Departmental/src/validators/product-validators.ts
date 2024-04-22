@@ -114,3 +114,31 @@ export const getProductsValidator: ValidationChain[] = [
     .isInt({ max: 5, min: 1 })
     .withMessage('Rating start value should be an integer within 1 to 5 only')
 ];
+
+export const billTransactionValidator: ValidationChain[] = [
+  body('items')
+    .notEmpty()
+    .withMessage('Items is required')
+    .isArray()
+    .withMessage('Items should be an array'),
+  body('items.*.product')
+    .notEmpty()
+    .withMessage('Product is required in a item')
+    .isMongoId()
+    .withMessage('Product should be a valid Mongo Id'),
+  body('items.*.qty')
+    .notEmpty()
+    .withMessage('Qty is required in a item')
+    .isInt()
+    .withMessage('Quantity should be an integer'),
+  body('items.*.price')
+    .notEmpty()
+    .withMessage('Price is required in a item')
+    .isInt()
+    .withMessage('Price should be an integer'),
+  body('customer')
+    .notEmpty()
+    .withMessage('Customer is required')
+    .isMongoId()
+    .withMessage('Customer should be a valid Mongo Id')
+];

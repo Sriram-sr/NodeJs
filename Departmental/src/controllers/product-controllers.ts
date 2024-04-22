@@ -125,15 +125,14 @@ export const getProducts: RequestHandler = async (req, res, next) => {
     if (ratingEnd) rating.$lte = ratingEnd;
     filters = { ...filters, overallRating: rating };
   }
-  console.log(filters);
   try {
     let products;
     if (billSearch === 'true') {
       products = await Product.find(filters)
+        .select('productName price')
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
     } else {
-      console.log('Landing page query');
       products = await Product.find(filters)
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
