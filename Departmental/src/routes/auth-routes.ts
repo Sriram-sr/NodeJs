@@ -3,14 +3,16 @@ import {
   signinValidator,
   signupValidator,
   emailOrMobileValidator,
-  resetPasswordValidator
+  resetPasswordValidator,
+  getUserProfileValidator
 } from '../validators/auth-validators';
 import {
   signinUser,
   signupUser,
   getAccessToken,
   forgotPasswordHanldler,
-  resetPassword
+  resetPassword,
+  getUserProfile
 } from '../controllers/auth-controllers';
 
 const router = Router();
@@ -22,5 +24,6 @@ router
   .route('/forgot-password')
   .post(emailOrMobileValidator, forgotPasswordHanldler);
 router.route('/reset-password').post(resetPasswordValidator, resetPassword);
+router.route('/user/:mobile').get(getUserProfileValidator, getUserProfile);
 
 export default router;

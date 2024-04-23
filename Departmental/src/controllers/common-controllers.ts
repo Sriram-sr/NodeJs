@@ -35,8 +35,17 @@ export const createBillTransaction: RequestHandler = async (
     const productPrice = item.qty * item.price;
     totalPrice += productPrice;
     const product = await Product.findById(item.product);
-    if (product) product.unitsLeft -= item.qty;
-    await product?.save();
+    if (product) {
+      if (!(product.unitsLeft - item.qty >= 0)) {
+        return errorHandler(
+          'Cannot select quantity larger than available stock',
+          HttpStatus.BAD_REQUEST,
+          next
+        );
+      }
+      product.unitsLeft -= item.qty;
+      await product?.save();
+    }
   }
   const transaction = await BillTransaction.create({
     items,

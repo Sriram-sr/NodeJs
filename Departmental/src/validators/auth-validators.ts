@@ -1,4 +1,4 @@
-import { ValidationChain, body, oneOf } from 'express-validator';
+import { ValidationChain, body, oneOf, param } from 'express-validator';
 
 export const emailOrMobileValidator = oneOf(
   [
@@ -60,3 +60,9 @@ export const resetPasswordValidator: ValidationChain[] = [
     .isLength({ min: 6, max: 15 })
     .withMessage('Password should be atleast 6 to 15 characters')
 ];
+
+export const getUserProfileValidator: ValidationChain = param('mobile')
+  .isLength({ min: 10, max: 10 })
+  .withMessage('Mobile number should be 10 in length')
+  .matches(/[6789]\d{9}/g)
+  .withMessage('Enter a valid mobile number');

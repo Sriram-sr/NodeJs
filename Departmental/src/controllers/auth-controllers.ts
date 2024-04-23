@@ -228,3 +228,26 @@ export const resetPassword: RequestHandler = async (req, res, next) => {
     );
   }
 };
+
+export const getUserProfile: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { mobile } = req.params as { mobile: string };
+
+  const user = await User.findOne({ mobile: mobile }).select(
+    'email mobile role'
+  );
+  // TODO: Need to populate shopping history
+  if (!user) {
+    return errorHandler(
+      'User not found with this mobile',
+      HttpStatus.NOT_FOUND,
+      next
+    );
+  }
+  res.status(HttpStatus.OK).json({
+    message: 'Successfully fetched user profile',
+    user
+  });
+};
