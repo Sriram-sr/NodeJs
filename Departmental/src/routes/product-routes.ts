@@ -15,7 +15,9 @@ import {
   getSingleProduct,
   rateProduct,
   updateProduct,
-  getCategories
+  getCategories,
+  addToWishlist,
+  getWishlistedProducts
 } from '../controllers/product-controllers';
 
 const router = Router();
@@ -31,11 +33,13 @@ router
     addProductValidator,
     addProduct
   );
+router.route('/wishlist').get(isAuth, getWishlistedProducts);
 router
   .route('/:productId')
   .get(productIdValidator, getSingleProduct)
   .patch(isAuth, isAdmin, updateProductvalidator, updateProduct)
   .delete(isAuth, isAdmin, productIdValidator, deleteProduct);
 router.route('/:productId/rating').post(isAuth, rateProduct);
+router.route('/wishlist/:productId').post(isAuth, addToWishlist);
 
 export default router;

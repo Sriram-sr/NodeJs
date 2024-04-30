@@ -9,8 +9,9 @@ import Category from '../models/Category';
 import { customRequest } from '../middlewares/is-auth';
 import Product, { ProductInput, ProductQuery } from '../models/Product';
 import { Counter } from '../middlewares/mongoose-counter';
+import User from '../models/User';
 
-export const getCategories: RequestHandler = async (req, res, next) => {
+const getCategories: RequestHandler = async (req, res, next) => {
   const { page } = req.query as { page?: number };
   const currentPage = page || 1;
   const perPage = 10;
@@ -35,11 +36,7 @@ export const getCategories: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const addCategory: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const addCategory: RequestHandler = async (req: customRequest, res, next) => {
   let { category: categoryName } = req.body as { category: string };
   categoryName =
     categoryName.trim().charAt(0).toUpperCase() + categoryName.trim().slice(1);
@@ -82,7 +79,7 @@ export const addCategory: RequestHandler = async (
   }
 };
 
-export const getProducts: RequestHandler = async (req, res, next) => {
+const getProducts: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -129,7 +126,7 @@ export const getProducts: RequestHandler = async (req, res, next) => {
     let products;
     if (billSearch === 'true') {
       products = await Product.find(filters)
-        .select('productName price')
+        .select('productName price unitsLeft')
         .skip((currentPage - 1) * perPage)
         .limit(perPage);
     } else {
@@ -151,11 +148,7 @@ export const getProducts: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const addProduct: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const addProduct: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -201,7 +194,7 @@ export const addProduct: RequestHandler = async (
   }
 };
 
-export const getSingleProduct: RequestHandler = async (req, res, next) => {
+const getSingleProduct: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -230,7 +223,7 @@ export const getSingleProduct: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const updateProduct: RequestHandler = async (req, res, next) => {
+const updateProduct: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -258,7 +251,7 @@ export const updateProduct: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const deleteProduct: RequestHandler = async (req, res, next) => {
+const deleteProduct: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -287,11 +280,7 @@ export const deleteProduct: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const rateProduct: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const rateProduct: RequestHandler = async (req: customRequest, res, next) => {
   const { productId } = req.params as { productId: string };
   const { ratings } = req.body as { ratings: number };
   if (!ratings) {
@@ -348,4 +337,80 @@ export const rateProduct: RequestHandler = async (
       err
     );
   }
+};
+
+const addToWishlist: RequestHandler = async (req: customRequest, res, next) => {
+  const { productId } = req.params as { productId: string };
+
+  try {
+    const product = await Product.findById(productId);
+    if (!product) {
+      return errorHandler(
+        'Product not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    const user = await User.findById(req.userId);
+    const existingProduct = user?.wishList?.find(
+      product => product._id.toString() === productId
+    );
+    if (existingProduct) {
+      return errorHandler(
+        'User already had this product in wishlist',
+        HttpStatus.CONFLICT,
+        next
+      );
+    }
+    user?.wishList?.unshift(product._id);
+    user?.save();
+
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully added product to wishlist'
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add to wishlist currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const getWishlistedProducts: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  try {
+    const user = await User.findById(req.userId).select('wishList').populate({
+      path: 'wishList',
+      select: 'productName description imageUrl price overallRating'
+    });
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched wishlisted products',
+      wishlist: user?.wishList
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get wishlist currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export {
+  getCategories,
+  addCategory,
+  getProducts,
+  addProduct,
+  deleteProduct,
+  getSingleProduct,
+  rateProduct,
+  updateProduct,
+  addToWishlist,
+  getWishlistedProducts
 };
