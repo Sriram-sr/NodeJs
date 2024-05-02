@@ -10,10 +10,7 @@ export type UserRole = 'admin' | 'staff' | 'customer';
 
 interface CartProduct {
   product: ProductDocument;
-  quantity: {
-    unit: string;
-    items: number;
-  };
+  quantity: number;
   price: number;
 }
 
@@ -68,14 +65,8 @@ const userSchema = new Schema<UserDocument>(
             required: true
           },
           quantity: {
-            unit: {
-              type: String,
-              required: true
-            },
-            items: {
-              type: Number,
-              required: true
-            }
+            type: Number,
+            required: true
           }
         }
       ],
