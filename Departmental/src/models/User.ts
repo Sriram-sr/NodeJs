@@ -8,9 +8,9 @@ import { randomBytes } from 'crypto';
 
 export type UserRole = 'admin' | 'staff' | 'customer';
 
-interface CartProduct {
+export interface CartProduct {
   product: ProductDocument;
-  quantity: number;
+  qty: number;
   price: number;
 }
 
@@ -64,7 +64,7 @@ const userSchema = new Schema<UserDocument>(
             type: Number,
             required: true
           },
-          quantity: {
+          qty: {
             type: Number,
             required: true
           }

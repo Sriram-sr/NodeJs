@@ -1,16 +1,10 @@
 import { Document, Schema, model } from 'mongoose';
 import { UserDocument } from './User';
-import { ProductDocument } from './Product';
+import { CartProduct } from './User';
 
 type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
-export interface OrderItem {
-  product: ProductDocument;
-  qty: number;
-  price: number;
-}
-
-interface Address {
+export interface Address {
   houseNo: string;
   street: string;
   city: string;
@@ -20,7 +14,7 @@ interface Address {
 
 export interface OrderDocument extends Document {
   user: UserDocument;
-  items: Array<OrderItem>;
+  items: Array<CartProduct>;
   totalPrice: number;
   orderStatus: OrderStatus;
   shippingInfo?: Address;

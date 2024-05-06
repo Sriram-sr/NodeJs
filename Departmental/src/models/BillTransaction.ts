@@ -1,20 +1,14 @@
 import { Document, Schema, model } from 'mongoose';
-import { UserDocument } from './User';
-import { OrderItem } from './Order';
-import { ProductDocument } from './Product';
+import { UserDocument, CartProduct } from './User';
 
 export interface BillTransactionDocument extends Document {
   customer: UserDocument;
-  items: Array<OrderItem>;
+  items: Array<CartProduct>;
   totalPrice: number;
 }
 
 export interface BillTransactionInput {
-  items: Array<{
-    product: ProductDocument;
-    qty: number;
-    price: number;
-  }>;
+  items: Array<CartProduct>;
   customer: UserDocument;
 }
 

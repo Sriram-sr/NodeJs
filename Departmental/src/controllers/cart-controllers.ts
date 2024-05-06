@@ -62,13 +62,13 @@ export const addToCart: RequestHandler = async (
       product => product.product.toString() === productId!.toString()
     );
     if (existingProductIdx! >= 0) {
-      user.shoppingCart!.products[existingProductIdx!].quantity += 1;
+      user.shoppingCart!.products[existingProductIdx!].qty += 1;
       user.shoppingCart!.totalPrice += +price;
     } else {
       user.shoppingCart?.products.unshift({
         product: productId!,
         price: +price,
-        quantity: 1
+        qty: 1
       });
       if (
         user.shoppingCart?.totalPrice &&
@@ -113,7 +113,7 @@ export const incrementCartProductQty: RequestHandler = async (
         next
       );
     }
-    existingProduct.quantity += 1;
+    existingProduct.qty += 1;
     user!.shoppingCart!.totalPrice += existingProduct.price;
     const updatedUser = await user?.save();
     res.status(HttpStatus.OK).json({
@@ -151,10 +151,10 @@ export const decrementCartProductQty: RequestHandler = async (
     }
     const priceToDeduct =
       user?.shoppingCart?.products[existingProductIdx!].price;
-    if (user?.shoppingCart?.products[existingProductIdx!].quantity === 1) {
+    if (user?.shoppingCart?.products[existingProductIdx!].qty === 1) {
       user.shoppingCart.products.splice(existingProductIdx!, 1);
     } else {
-      user!.shoppingCart!.products[existingProductIdx!].quantity -= 1;
+      user!.shoppingCart!.products[existingProductIdx!].qty -= 1;
     }
     user!.shoppingCart!.totalPrice -= priceToDeduct!;
     const updatedUser = await user?.save();
@@ -193,7 +193,7 @@ export const removeFromCart: RequestHandler = async (
     }
     user!.shoppingCart!.totalPrice -=
       user!.shoppingCart!.products[existingProductIdx!].price *
-      user!.shoppingCart!.products[existingProductIdx!].quantity;
+      user!.shoppingCart!.products[existingProductIdx!].qty;
     user?.shoppingCart?.products.splice(existingProductIdx!, 1);
     const updatedUser = await user?.save();
     res.status(HttpStatus.OK).json({
