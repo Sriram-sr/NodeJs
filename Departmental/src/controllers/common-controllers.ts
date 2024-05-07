@@ -42,48 +42,44 @@ export const createBillTransaction: RequestHandler = async (
   res,
   next
 ) => {
-  const billingUser = await User.findById(req.userId);
-  if (!(billingUser?.role === 'staff' || billingUser?.role === 'admin')) {
-    return errorHandler(
-      'Only staff or admins can initiate a bill transaction',
-      HttpStatus.FORBIDDEN,
-      next
+  try {
+    const billingUser = await User.findById(req.userId);
+    if (!(billingUser?.role === 'staff' || billingUser?.role === 'admin')) {
+      return errorHandler(
+        'Only staff or admins can initiate a bill transaction',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    if (!validationResult(req).isEmpty()) {
+      return validationHandler(validationResult(req).array(), next);
+    }
+    const { items, customer } = req.body as BillTransactionInput;
+
+    let totalPrice = await productQuantityHandler(items, next);
+    if (!totalPrice) {
+      return;
+    }
+    const transaction = await BillTransaction.create({
+      items,
+      customer,
+      totalPrice
+    });
+    const user = await User.findById(customer);
+    user?.shoppingHistory?.unshift(transaction);
+    await user?.save();
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully created a bill transaction',
+      transaction
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not proceed this transaction currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
     );
   }
-  if (!validationResult(req).isEmpty()) {
-    return validationHandler(validationResult(req).array(), next);
-  }
-  const { items, customer } = req.body as BillTransactionInput;
-
-  let totalPrice = 0;
-  for (const item of items) {
-    const productPrice = item.qty * item.price;
-    totalPrice += productPrice;
-    const product = await Product.findById(item.product);
-    if (product) {
-      if (!(product.unitsLeft - item.qty >= 0)) {
-        return errorHandler(
-          'Cannot select quantity larger than available stock',
-          HttpStatus.BAD_REQUEST,
-          next
-        );
-      }
-      product.unitsLeft -= item.qty;
-      await product?.save();
-    }
-  }
-  const transaction = await BillTransaction.create({
-    items,
-    customer,
-    totalPrice
-  });
-  const user = await User.findById(customer);
-  user?.shoppingHistory?.unshift(transaction);
-  await user?.save();
-  res.status(HttpStatus.CREATED).json({
-    message: 'Successfully created a bill transaction',
-    transaction
-  });
 };
 
 export const placeOrder: RequestHandler = async (
@@ -110,13 +106,6 @@ export const placeOrder: RequestHandler = async (
       user?.shoppingCart?.products!,
       next
     );
-    console.log(
-      'total price is ',
-      totalPrice,
-      'and ',
-      user?.shoppingCart?.totalPrice
-    );
-    console.log(userCart);
     if (!totalPrice) {
       return;
     }
