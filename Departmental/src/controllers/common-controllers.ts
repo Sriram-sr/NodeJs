@@ -43,14 +43,6 @@ export const createBillTransaction: RequestHandler = async (
   next
 ) => {
   try {
-    const billingUser = await User.findById(req.userId);
-    if (!(billingUser?.role === 'staff' || billingUser?.role === 'admin')) {
-      return errorHandler(
-        'Only staff or admins can initiate a bill transaction',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
     if (!validationResult(req).isEmpty()) {
       return validationHandler(validationResult(req).array(), next);
     }
@@ -140,3 +132,33 @@ export const placeOrder: RequestHandler = async (
     );
   }
 };
+
+export const getOrders: RequestHandler = async (req, res, next) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  try {
+    const orders = await Order.find()
+      .select('user totalPrice orderStatus staffAssigned')
+      .populate({
+        path: 'user',
+        select: 'mobile -_id'
+      })
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched orders',
+      orders
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get orders currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// TODO
+// export const getSingleOrder: RequestHandler = (req, res, next) => {}
