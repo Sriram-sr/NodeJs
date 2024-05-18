@@ -160,5 +160,32 @@ export const getOrders: RequestHandler = async (req, res, next) => {
   }
 };
 
-// TODO
-// export const getSingleOrder: RequestHandler = (req, res, next) => {}
+export const getSingleOrder: RequestHandler = async (req, res, next) => {
+  const { orderId } = req.params as { orderId: string };
+
+  try {
+    const order = await Order.findById(orderId)
+      .populate({
+        path: 'user',
+        select: 'mobile -_id'
+      })
+      .populate({
+        path: 'items',
+        populate: {
+          path: 'product',
+          select: 'productName -_id category'
+        }
+      });
+    res.status(HttpStatus.OK).json({
+      message: 'Succesfully fetched order',
+      order
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get order currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};

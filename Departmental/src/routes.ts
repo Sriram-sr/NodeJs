@@ -8,7 +8,8 @@ import { billTransactionValidator } from './validators/product-validators';
 import {
   createBillTransaction,
   placeOrder,
-  getOrders
+  getOrders,
+  getSingleOrder
 } from './controllers/common-controllers';
 import { createOrderValidator } from './validators/common-validators';
 
@@ -29,4 +30,5 @@ router
   .route('/order')
   .get(isAuth, isAdminOrStaff, getOrders)
   .post(isAuth, createOrderValidator, placeOrder);
+router.route('/order/:orderId').get(getSingleOrder);
 export default router;
