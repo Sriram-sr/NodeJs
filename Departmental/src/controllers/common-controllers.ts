@@ -10,8 +10,8 @@ import BillTransaction, {
 } from '../models/BillTransaction';
 import Product from '../models/Product';
 import { customRequest } from '../middlewares/is-auth';
-import User, { CartProduct } from '../models/User';
-import Order, { Address } from '../models/Order';
+import User, { CartProduct, UserDocument } from '../models/User';
+import Order, { Address, OrderStatus } from '../models/Order';
 
 const productQuantityHandler = async (
   items: Array<CartProduct>,
@@ -183,6 +183,53 @@ export const getSingleOrder: RequestHandler = async (req, res, next) => {
   } catch (err) {
     errorHandler(
       'Something went wrong, could not get order currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export const updateOrder: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { orderId } = req.params as { orderId: string };
+  const { staff, status } = req.body as {
+    staff?: UserDocument;
+    status?: OrderStatus;
+  };
+
+  try {
+    const updatingUser = await User.findById(req.userId);
+    if (
+      updatingUser?.role === 'customer' &&
+      !(status && status === 'cancelled' && !staff)
+    ) {
+      return errorHandler(
+        'Customer can only update the order with cancellation',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { staffAssigned: staff, orderStatus: status },
+      {
+        new: true
+      }
+    );
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully updated the order',
+      updatedOrder
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not update order currently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err

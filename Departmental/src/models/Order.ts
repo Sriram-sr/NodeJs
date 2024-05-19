@@ -2,7 +2,7 @@ import { Document, Schema, model } from 'mongoose';
 import { UserDocument } from './User';
 import { CartProduct } from './User';
 
-type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
+export type OrderStatus = 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 export interface Address {
   houseNo: string;

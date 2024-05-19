@@ -9,9 +9,13 @@ import {
   createBillTransaction,
   placeOrder,
   getOrders,
-  getSingleOrder
+  getSingleOrder,
+  updateOrder
 } from './controllers/common-controllers';
-import { createOrderValidator } from './validators/common-validators';
+import {
+  createOrderValidator,
+  updateOrderValidator
+} from './validators/common-validators';
 
 const router = Router();
 
@@ -30,5 +34,8 @@ router
   .route('/order')
   .get(isAuth, isAdminOrStaff, getOrders)
   .post(isAuth, createOrderValidator, placeOrder);
-router.route('/order/:orderId').get(getSingleOrder);
+router
+  .route('/order/:orderId')
+  .get(getSingleOrder)
+  .patch(isAuth, updateOrderValidator, updateOrder);
 export default router;

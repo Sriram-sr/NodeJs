@@ -1,4 +1,4 @@
-import { ValidationChain, body } from 'express-validator';
+import { ValidationChain, body, param } from 'express-validator';
 
 export const addToCartValidator: ValidationChain[] = [
   body('price')
@@ -21,4 +21,17 @@ export const createOrderValidator: ValidationChain[] = [
     .isLength({ min: 6, max: 6 })
     .withMessage('Zip code must be 6 digits'),
   body('landmark').optional().trim()
+];
+
+export const updateOrderValidator: ValidationChain[] = [
+  param('orderId')
+    .isMongoId()
+    .withMessage('Order Id should be a valid Mongo Id'),
+  body('staff')
+    .optional()
+    .isMongoId()
+    .withMessage('Staff should be a valid Mongo Id'),
+  body('status')
+    .optional()
+    .isIn(['processing', 'shipped', 'delivered', 'cancelled'])
 ];
