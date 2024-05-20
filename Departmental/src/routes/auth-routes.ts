@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { isAdminOrStaff } from '../middlewares/common-middlewares';
 import {
   signinValidator,
   signupValidator,
@@ -12,8 +13,10 @@ import {
   getAccessToken,
   forgotPasswordHanldler,
   resetPassword,
-  getUserProfile
+  getUserProfile,
+  getStaffs
 } from '../controllers/auth-controllers';
+import { isAuth } from '../middlewares/is-auth';
 
 const router = Router();
 
@@ -25,5 +28,6 @@ router
   .post(emailOrMobileValidator, forgotPasswordHanldler);
 router.route('/reset-password').post(resetPasswordValidator, resetPassword);
 router.route('/user/:mobile').get(getUserProfileValidator, getUserProfile);
+router.route('/staff').get(isAuth, isAdminOrStaff, getStaffs);
 
 export default router;

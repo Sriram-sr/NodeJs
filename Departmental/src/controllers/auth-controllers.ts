@@ -15,7 +15,7 @@ import {
 } from '../utils/env-variables';
 import { customRequest } from '../middlewares/is-auth';
 
-export const signupUser: RequestHandler = async (req, res, next) => {
+const signupUser: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -58,7 +58,7 @@ export const signupUser: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const signinUser: RequestHandler = async (req, res, next) => {
+const signinUser: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -106,7 +106,7 @@ export const signinUser: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getAccessToken: RequestHandler = async (
+const getAccessToken: RequestHandler = async (
   req: customRequest,
   res,
   next
@@ -153,11 +153,7 @@ export const getAccessToken: RequestHandler = async (
   }
 };
 
-export const forgotPasswordHanldler: RequestHandler = async (
-  req,
-  res,
-  next
-) => {
+const forgotPasswordHanldler: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -192,7 +188,7 @@ export const forgotPasswordHanldler: RequestHandler = async (
   }
 };
 
-export const resetPassword: RequestHandler = async (req, res, next) => {
+const resetPassword: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -229,25 +225,68 @@ export const resetPassword: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getUserProfile: RequestHandler = async (req, res, next) => {
+const getUserProfile: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
   const { mobile } = req.params as { mobile: string };
 
-  const user = await User.findOne({ mobile: mobile }).select(
-    'email mobile role'
-  );
-  // TODO: Need to populate shopping history
-  if (!user) {
-    return errorHandler(
-      'User not found with this mobile',
-      HttpStatus.NOT_FOUND,
-      next
+  try {
+    const user = await User.findOne({ mobile: mobile }).select(
+      'email mobile role'
+    );
+    // TODO: Need to populate shopping history
+    if (!user) {
+      return errorHandler(
+        'User not found with this mobile',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched user profile',
+      user
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get profile currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
     );
   }
-  res.status(HttpStatus.OK).json({
-    message: 'Successfully fetched user profile',
-    user
-  });
+};
+
+const getStaffs: RequestHandler = async (req, res, next) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+
+  try {
+    const staffs = await User.find({ role: 'staff' })
+      .select('email mobile')
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched the staffs',
+      staffs
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get staffs currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export {
+  signinUser,
+  signupUser,
+  getAccessToken,
+  forgotPasswordHanldler,
+  resetPassword,
+  getUserProfile,
+  getStaffs
 };
