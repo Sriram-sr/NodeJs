@@ -15,6 +15,15 @@ import {
 } from '../utils/env-variables';
 import { customRequest } from '../middlewares/is-auth';
 
+function paginateData(page: number, data: Array<any>) {
+  const currentPage = page || 1;
+  const perPage = 10;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+
+  return data.slice(skip, limit);
+}
+
 const signupUser: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
@@ -232,10 +241,24 @@ const getUserProfile: RequestHandler = async (req, res, next) => {
   const { mobile } = req.params as { mobile: string };
 
   try {
-    const user = await User.findOne({ mobile: mobile }).select(
-      'email mobile role'
-    );
-    // TODO: Need to populate shopping history
+    const user = await User.findOne({ mobile: mobile })
+      .select('email mobile role shoppingHistory')
+      .populate({
+        path: 'shoppingHistory',
+        select: 'totalPrice customer createdAt',
+        populate: {
+          path: 'customer',
+          select: 'mobile -_id'
+        }
+      })
+      .populate({
+        path: 'ordersHistory',
+        select: 'user totalPrice orderStatus createdAt',
+        populate: {
+          path: 'user',
+          select: 'mobile -_id'
+        }
+      });
     if (!user) {
       return errorHandler(
         'User not found with this mobile',
@@ -243,6 +266,8 @@ const getUserProfile: RequestHandler = async (req, res, next) => {
         next
       );
     }
+    user.shoppingHistory = user.shoppingHistory?.slice(0, 11);
+    user.ordersHistory = user.ordersHistory?.slice(0, 11);
     res.status(HttpStatus.OK).json({
       message: 'Successfully fetched user profile',
       user
@@ -281,6 +306,71 @@ const getStaffs: RequestHandler = async (req, res, next) => {
   }
 };
 
+const getShoppingHistory: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { page } = req.query as { page?: number };
+
+  try {
+    const user = await User.findById(req.userId)
+      .select('shoppingHistory')
+      .populate({
+        path: 'shoppingHistory',
+        select: 'totalPrice customer createdAt',
+        populate: {
+          path: 'customer',
+          select: 'mobile -_id'
+        }
+      });
+
+    const shoppingHistory = paginateData(page!, user?.shoppingHistory!);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched shopping history',
+      shoppingHistory
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get shopping history currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const getOrdersHistory: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { page } = req.query as { page?: number };
+
+  try {
+    const user = await User.findById(req.userId).populate({
+      path: 'ordersHistory',
+      select: 'user totalPrice orderStatus createdAt',
+      populate: {
+        path: 'user',
+        select: 'mobile -_id'
+      }
+    });
+    const ordersHistory = paginateData(page!, user?.ordersHistory!);
+    res.status(HttpStatus.OK).json({
+      message: 'Sucessfully fetched orders history',
+      ordersHistory
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get orders history currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   signinUser,
   signupUser,
@@ -288,5 +378,7 @@ export {
   forgotPasswordHanldler,
   resetPassword,
   getUserProfile,
-  getStaffs
+  getStaffs,
+  getShoppingHistory,
+  getOrdersHistory
 };

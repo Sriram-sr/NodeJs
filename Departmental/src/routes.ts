@@ -39,3 +39,8 @@ router
   .get(getSingleOrder)
   .patch(isAuth, updateOrderValidator, updateOrder);
 export default router;
+
+// TODO: Show single order/bill transaction
+
+// order/history
+// auth/user/orders

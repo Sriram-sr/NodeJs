@@ -25,7 +25,8 @@ export interface UserDocument extends Document {
     totalPrice: number;
   };
   wishList?: Array<ProductDocument>;
-  shoppingHistory?: Array<BillTransactionDocument | OrderDocument>;
+  shoppingHistory?: Array<BillTransactionDocument>;
+  ordersHistory?: Array<OrderDocument>;
   resetToken?: string;
   resetTokenExpiry?: Date;
   getJwtToken: (expiry: string) => string;
@@ -79,6 +80,12 @@ const userSchema = new Schema<UserDocument>(
       }
     ],
     shoppingHistory: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'BillTransaction'
+      }
+    ],
+    ordersHistory: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Order'

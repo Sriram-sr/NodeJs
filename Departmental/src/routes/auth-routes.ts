@@ -14,7 +14,9 @@ import {
   forgotPasswordHanldler,
   resetPassword,
   getUserProfile,
-  getStaffs
+  getStaffs,
+  getShoppingHistory,
+  getOrdersHistory
 } from '../controllers/auth-controllers';
 import { isAuth } from '../middlewares/is-auth';
 
@@ -27,6 +29,8 @@ router
   .route('/forgot-password')
   .post(emailOrMobileValidator, forgotPasswordHanldler);
 router.route('/reset-password').post(resetPasswordValidator, resetPassword);
+router.route('/user/orders').get(isAuth, getOrdersHistory);
+router.route('/user/transactions').get(isAuth, getShoppingHistory);
 router.route('/user/:mobile').get(getUserProfileValidator, getUserProfile);
 router.route('/staff').get(isAuth, isAdminOrStaff, getStaffs);
 

@@ -117,7 +117,7 @@ export const placeOrder: RequestHandler = async (
       products: [],
       totalPrice: 0
     };
-    user?.shoppingHistory?.unshift(order._id);
+    user?.ordersHistory?.unshift(order._id);
     await user?.save();
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created order',
