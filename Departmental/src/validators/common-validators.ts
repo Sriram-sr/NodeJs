@@ -1,4 +1,4 @@
-import { ValidationChain, body, query } from 'express-validator';
+import { ValidationChain, body, param, query } from 'express-validator';
 import User from '../models/User';
 
 export const addToCartValidator: ValidationChain[] = [
@@ -25,7 +25,7 @@ export const createOrderValidator: ValidationChain[] = [
 ];
 
 export const updateOrderValidator: ValidationChain[] = [
-  query('orderId')
+  param('orderId')
     .isMongoId()
     .withMessage('Order Id should be a valid Mongo Id'),
   body('staff')

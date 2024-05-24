@@ -44,6 +44,3 @@ router
   .get(getSingleOrder)
   .patch(isAuth, updateOrderValidator, updateOrder);
 export default router;
-
-// TODO: Show single bill transaction
-// Get all bill transactions as a report.
