@@ -1,4 +1,5 @@
-import { ValidationChain, body, param } from 'express-validator';
+import { ValidationChain, body, query } from 'express-validator';
+import User from '../models/User';
 
 export const addToCartValidator: ValidationChain[] = [
   body('price')
@@ -24,7 +25,7 @@ export const createOrderValidator: ValidationChain[] = [
 ];
 
 export const updateOrderValidator: ValidationChain[] = [
-  param('orderId')
+  query('orderId')
     .isMongoId()
     .withMessage('Order Id should be a valid Mongo Id'),
   body('staff')
@@ -35,3 +36,17 @@ export const updateOrderValidator: ValidationChain[] = [
     .optional()
     .isIn(['processing', 'shipped', 'delivered', 'cancelled'])
 ];
+
+export const getTransactionsValidator: ValidationChain = query('mobile')
+  .optional()
+  .isLength({ min: 10, max: 10 })
+  .withMessage('Mobile number should be 10 in length')
+  .matches(/[6789]\d{9}/g)
+  .withMessage('Enter a valid mobile number')
+  .custom(async (value, { req }) => {
+    const customer = await User.findOne({ mobile: value });
+    if (!customer) {
+      throw new Error('Customer not found with this mobile');
+    }
+    req.customer = customer._id;
+  });

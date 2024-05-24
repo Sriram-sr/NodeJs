@@ -6,7 +6,9 @@ import {
   validationHandler
 } from '../utils/error-handlers';
 import BillTransaction, {
-  BillTransactionInput
+  BillTransactionInput,
+  TransactionsQuery,
+  TransactionsFilter
 } from '../models/BillTransaction';
 import Product from '../models/Product';
 import { customRequest } from '../middlewares/is-auth';
@@ -37,17 +39,113 @@ const productQuantityHandler = async (
   return totalPrice;
 };
 
-export const createBillTransaction: RequestHandler = async (
+const getTransactionFilters: (
+  req: customRequest,
+  isOrder?: boolean
+) => TransactionsFilter = (req: customRequest, isOrder?: boolean) => {
+  const { mobile, from, to, priceGreater, priceLesser } =
+    req.query as TransactionsQuery;
+  let filters: TransactionsFilter = {};
+  if (mobile) {
+    if (isOrder) {
+      filters = { user: req.customer };
+    } else {
+      filters = { customer: req.customer };
+    }
+  }
+  if (from || to) {
+    let dateFilter: { $gte?: Date; $lte?: Date } = {};
+    if (from) dateFilter.$gte = from;
+    if (to) dateFilter.$lte = to;
+    filters = { ...filters, createdAt: dateFilter };
+  }
+  if (priceGreater || priceLesser) {
+    let priceFilter: { $gte?: number; $lte?: number } = {};
+    if (priceGreater) {
+      priceFilter.$gte = priceGreater;
+    }
+    if (priceLesser) {
+      priceFilter.$lte = priceLesser;
+    }
+    filters = { ...filters, totalPrice: priceFilter };
+  }
+
+  return filters;
+};
+
+const getTransactions: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  const filters = getTransactionFilters(req);
+
+  try {
+    const transactions = await BillTransaction.find(filters)
+      .select('customer totalPrice createdAt')
+      .populate({
+        path: 'customer',
+        select: 'mobile -_id'
+      })
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched bill transactions',
+      transactions
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get transactions currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const getSingleTransaction: RequestHandler = async (req, res, next) => {
+  const { transactionId } = req.params as { transactionId: string };
+
+  try {
+    const transaction = await BillTransaction.findById(transactionId)
+      .populate({
+        path: 'customer',
+        select: 'mobile -_id'
+      })
+      .populate({
+        path: 'items',
+        populate: {
+          path: 'product',
+          select: 'productName'
+        }
+      });
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched transaction',
+      transaction
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get transaction currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const createBillTransaction: RequestHandler = async (
   req: customRequest,
   res,
   next
 ) => {
-  try {
-    if (!validationResult(req).isEmpty()) {
-      return validationHandler(validationResult(req).array(), next);
-    }
-    const { items, customer } = req.body as BillTransactionInput;
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
+  const { items, customer } = req.body as BillTransactionInput;
 
+  try {
     let totalPrice = await productQuantityHandler(items, next);
     if (!totalPrice) {
       return;
@@ -74,11 +172,7 @@ export const createBillTransaction: RequestHandler = async (
   }
 };
 
-export const placeOrder: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const placeOrder: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -133,13 +227,18 @@ export const placeOrder: RequestHandler = async (
   }
 };
 
-export const getOrders: RequestHandler = async (req, res, next) => {
+const getOrders: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return validationHandler(validationResult(req).array(), next);
+  }
   const { page } = req.query as { page?: number };
   const currentPage = page || 1;
   const perPage = 10;
+  const filters = getTransactionFilters(req, true);
+
   try {
-    const orders = await Order.find()
-      .select('user totalPrice orderStatus staffAssigned')
+    const orders = await Order.find(filters)
+      .select('user totalPrice orderStatus staffAssigned createdAt')
       .populate({
         path: 'user',
         select: 'mobile -_id'
@@ -160,7 +259,7 @@ export const getOrders: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const getSingleOrder: RequestHandler = async (req, res, next) => {
+const getSingleOrder: RequestHandler = async (req, res, next) => {
   const { orderId } = req.params as { orderId: string };
 
   try {
@@ -190,11 +289,7 @@ export const getSingleOrder: RequestHandler = async (req, res, next) => {
   }
 };
 
-export const updateOrder: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const updateOrder: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return validationHandler(validationResult(req).array(), next);
   }
@@ -235,4 +330,14 @@ export const updateOrder: RequestHandler = async (
       err
     );
   }
+};
+
+export {
+  getTransactions,
+  getSingleTransaction,
+  createBillTransaction,
+  placeOrder,
+  getOrders,
+  getSingleOrder,
+  updateOrder
 };

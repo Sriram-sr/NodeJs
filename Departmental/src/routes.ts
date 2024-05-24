@@ -6,15 +6,18 @@ import { isAuth } from './middlewares/is-auth';
 import { isAdminOrStaff } from './middlewares/common-middlewares';
 import { billTransactionValidator } from './validators/product-validators';
 import {
+  getTransactions,
   createBillTransaction,
   placeOrder,
   getOrders,
   getSingleOrder,
-  updateOrder
-} from './controllers/common-controllers';
+  updateOrder,
+  getSingleTransaction
+} from './controllers/transaction-controllers';
 import {
   createOrderValidator,
-  updateOrderValidator
+  updateOrderValidator,
+  getTransactionsValidator
 } from './validators/common-validators';
 
 const router = Router();
@@ -24,15 +27,17 @@ router.use('/product', productRouter);
 router.use('/cart', cartRouter);
 router
   .route('/bill')
+  .get(isAuth, isAdminOrStaff, getTransactionsValidator, getTransactions)
   .post(
     isAuth,
     isAdminOrStaff,
     billTransactionValidator,
     createBillTransaction
   );
+router.route('/bill/:transactionId').get(getSingleTransaction);
 router
   .route('/order')
-  .get(isAuth, isAdminOrStaff, getOrders)
+  .get(isAuth, isAdminOrStaff, getTransactionsValidator, getOrders)
   .post(isAuth, createOrderValidator, placeOrder);
 router
   .route('/order/:orderId')
@@ -40,7 +45,5 @@ router
   .patch(isAuth, updateOrderValidator, updateOrder);
 export default router;
 
-// TODO: Show single order/bill transaction
-
-// order/history
-// auth/user/orders
+// TODO: Show single bill transaction
+// Get all bill transactions as a report.

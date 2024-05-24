@@ -9,6 +9,7 @@ export interface customRequest extends Request {
   userId?: UserDocument;
   role?: UserRole;
   category?: CategoryDocument;
+  customer?: UserDocument;
 }
 
 export const isAuth: RequestHandler = (req: customRequest, _, next) => {

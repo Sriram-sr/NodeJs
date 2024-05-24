@@ -12,6 +12,22 @@ export interface BillTransactionInput {
   customer: UserDocument;
 }
 
+export interface TransactionsQuery {
+  from?: Date;
+  to?: Date;
+  priceGreater?: number;
+  priceLesser?: number;
+  mobile?: string;
+  page?: number;
+}
+
+export interface TransactionsFilter {
+  customer?: UserDocument;
+  user?: UserDocument;
+  totalPrice?: { $gte?: number; $ltee?: number };
+  createdAt?: { $gte?: Date; $lte?: Date };
+}
+
 const billTransactionSchema = new Schema<BillTransactionDocument>(
   {
     customer: {
