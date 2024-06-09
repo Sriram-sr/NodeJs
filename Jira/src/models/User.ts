@@ -60,4 +60,4 @@ const userSchema = new Schema<UserDocument>(
 
 const User = model<UserDocument>('User', userSchema);
 
-export { UserDocument, User };
+export { User, UserDocument };

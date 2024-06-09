@@ -1,9 +1,10 @@
-import { Document, Schema, Types } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 import { UserDocument } from './User';
+import { TaskDocument } from './Task';
 
 interface CommentDocument extends Document {
   user: UserDocument;
-  task: Types.ObjectId;
+  task: TaskDocument;
   content: string;
 }
 
@@ -24,4 +25,6 @@ const commentSchema = new Schema<CommentDocument>({
   }
 });
 
-export { commentSchema };
+const Comment = model<CommentDocument>('Comment', commentSchema);
+
+export { Comment, CommentDocument };
