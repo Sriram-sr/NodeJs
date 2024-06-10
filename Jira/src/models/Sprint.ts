@@ -12,29 +12,34 @@ interface SprintDocument extends Document {
   tasks: Array<TaskDocument>;
 }
 
-const sprintSchema = new Schema<SprintDocument>({
-  sprintId: {
-    type: String,
-    unique: true,
-    required: true
+const sprintSchema = new Schema<SprintDocument>(
+  {
+    sprintId: {
+      type: String,
+      unique: true,
+      required: true
+    },
+    title: {
+      type: String,
+      required: true
+    },
+    startDate: {
+      type: Date,
+      required: true
+    },
+    endDate: {
+      type: Date,
+      required: true
+    },
+    goal: {
+      type: String,
+      required: true
+    }
   },
-  title: {
-    type: String,
-    required: true
-  },
-  startDate: {
-    type: Date,
-    required: true
-  },
-  endDate: {
-    type: Date,
-    required: true
-  },
-  goal: {
-    type: String,
-    required: true
+  {
+    timestamps: true
   }
-});
+);
 
 const Sprint = model<SprintDocument>('Sprint', sprintSchema);
 

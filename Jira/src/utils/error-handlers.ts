@@ -1,7 +1,7 @@
 import { NextFunction } from 'express';
 import { ValidationError } from 'express-validator';
 
-export const HttpStatus = {
+const HttpStatus = {
   OK: 200,
   CREATED: 201,
   BAD_REQUEST: 400,
@@ -25,7 +25,7 @@ class HttpError extends Error {
   }
 }
 
-export const inputValidationHandler = (
+const inputValidationHandler = (
   errors: ValidationError[],
   next: NextFunction
 ) => {
@@ -36,3 +36,18 @@ export const inputValidationHandler = (
   error.data = errors;
   next(error);
 };
+
+const errorHandler: (
+  message: string,
+  errorCode: number,
+  next: NextFunction,
+  err?: any
+) => void = (message, errorCode, next, err) => {
+  if (err) {
+    console.log(err);
+  }
+  const error = new HttpError(message, errorCode);
+  next(error);
+};
+
+export { HttpStatus, inputValidationHandler, HttpError, errorHandler };

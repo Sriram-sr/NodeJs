@@ -23,6 +23,8 @@ const commentSchema = new Schema<CommentDocument>({
     type: String,
     required: true
   }
+}, {
+  timestamps: true
 });
 
 const Comment = model<CommentDocument>('Comment', commentSchema);

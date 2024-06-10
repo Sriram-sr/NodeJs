@@ -18,57 +18,62 @@ interface ProjectDocument extends Document {
   sprints: Array<SprintDocument>;
 }
 
-const projectSchema = new Schema<ProjectDocument>({
-  projectId: {
-    type: String,
-    unique: true,
-    required: true
-  },
-  title: {
-    type: String,
-    unique: true,
-    required: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  creator: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  members: [
-    {
+const projectSchema = new Schema<ProjectDocument>(
+  {
+    projectId: {
+      type: String,
+      unique: true,
+      required: true
+    },
+    title: {
+      type: String,
+      unique: true,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
+    },
+    creator: {
       type: Schema.Types.ObjectId,
-      ref: 'User'
-    }
-  ],
-  joinRequests: [
-    {
-      requester: {
+      ref: 'User',
+      required: true
+    },
+    members: [
+      {
         type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-      },
-      reason: {
-        type: String,
-        required: true
-      },
-      status: {
-        type: String,
-        enum: ['Requested', 'Approved'],
-        required: true
+        ref: 'User'
       }
-    }
-  ],
-  sprints: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'Sprint'
-    }
-  ]
-});
+    ],
+    joinRequests: [
+      {
+        requester: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+          required: true
+        },
+        reason: {
+          type: String,
+          required: true
+        },
+        status: {
+          type: String,
+          enum: ['Requested', 'Approved'],
+          required: true
+        }
+      }
+    ],
+    sprints: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Sprint'
+      }
+    ]
+  },
+  {
+    timestamps: true
+  }
+);
 
 const Project = model<ProjectDocument>('Project', projectSchema);
 
