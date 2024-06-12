@@ -1,4 +1,5 @@
 import { Document, Schema, model } from 'mongoose';
+import { randomBytes } from 'crypto';
 
 interface Notification {
   category:
@@ -58,6 +59,17 @@ const userSchema = new Schema<UserDocument>(
   }
 );
 
+const generateToken: (bytes: number) => Promise<string> = bytes => {
+  return new Promise((resolve, reject) => {
+    randomBytes(bytes, (err, buffer) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(buffer.toString('hex'));
+    });
+  });
+};
+
 const User = model<UserDocument>('User', userSchema);
 
-export { User, UserDocument };
+export { User, UserDocument, generateToken };
