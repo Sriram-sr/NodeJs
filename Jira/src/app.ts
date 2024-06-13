@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
 import { connect } from 'mongoose';
+import logger from 'morgan';
 import { MONGODB_URI, PORT } from './utils/constants';
 import Router from './routes';
 import initialiseCounter from './middlewares/mongoose-counter';
@@ -9,6 +10,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(logger('dev'));
 
 app.use('/api/v1/', Router);
 

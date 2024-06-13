@@ -154,4 +154,28 @@ const resetPasswordHandler: RequestHandler = async (req, res, next) => {
   }
 };
 
-export { signupUser, signinUser, forgotPasswordHandler, resetPasswordHandler };
+const getUsers: RequestHandler = async (req, res, next) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+
+  try {
+    const users = await User.find()
+      .select('email')
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched users',
+      users
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get users currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export { signupUser, signinUser, forgotPasswordHandler, resetPasswordHandler, getUsers };

@@ -12,6 +12,7 @@ interface ProjectDocument extends Document {
   projectId: string;
   title: string;
   description: string;
+  visibility: 'public' | 'private';
   creator: UserDocument;
   members: Array<UserDocument>;
   joinRequests: Array<JoinRequest>;
@@ -32,6 +33,11 @@ const projectSchema = new Schema<ProjectDocument>(
     },
     description: {
       type: String,
+      required: true
+    },
+    visibility: {
+      type: String,
+      default: 'public',
       required: true
     },
     creator: {
