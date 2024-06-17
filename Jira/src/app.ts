@@ -3,7 +3,7 @@ import { connect } from 'mongoose';
 import logger from 'morgan';
 import { MONGODB_URI, PORT } from './utils/constants';
 import Router from './routes';
-import initialiseCounter from './middlewares/mongoose-counter';
+import { initialiseCounter } from './middlewares/mongoose-counter';
 import { HttpError, HttpStatus } from './utils/error-handlers';
 
 const app = express();

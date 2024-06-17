@@ -9,6 +9,7 @@ interface TaskDocument extends Document {
   status: 'Todo' | 'InProgress' | 'InReview' | 'Done';
   priority: 'High' | 'Medium' | 'Low';
   dueDate: Date;
+  creator: UserDocument;
   sprint: SprintDocument;
   assignee: UserDocument;
   comments: Array<CommentDocument>;

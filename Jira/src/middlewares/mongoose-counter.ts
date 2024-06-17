@@ -33,4 +33,4 @@ const initialiseCounter: (model: string, field: string) => void = async (
   }
 };
 
-export default initialiseCounter;
+export { Counter, initialiseCounter }

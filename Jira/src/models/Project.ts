@@ -9,7 +9,7 @@ interface JoinRequest {
 }
 
 interface ProjectDocument extends Document {
-  projectId: string;
+  projectCode: string;
   title: string;
   description: string;
   visibility: 'public' | 'private';
@@ -21,7 +21,7 @@ interface ProjectDocument extends Document {
 
 const projectSchema = new Schema<ProjectDocument>(
   {
-    projectId: {
+    projectCode: {
       type: String,
       unique: true,
       required: true
