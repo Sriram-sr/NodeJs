@@ -1,6 +1,6 @@
 import { ValidationChain, body } from 'express-validator';
 
-export const createProjectValidator: ValidationChain[] = [
+const createProjectValidator: ValidationChain[] = [
   body('projectCodePrefix')
     .notEmpty()
     .withMessage('Project code prefix is required')
@@ -25,3 +25,40 @@ export const createProjectValidator: ValidationChain[] = [
     .isIn(['public', 'private'])
     .withMessage('Visibility should be either public or private')
 ];
+
+const joinRequestValidator: ValidationChain[] = [
+  body('projectId')
+    .notEmpty()
+    .withMessage('Project Id is required')
+    .isMongoId()
+    .withMessage('Project Id should be valid Mongo Id'),
+  body('reason')
+    .notEmpty()
+    .withMessage('Reason is required')
+    .isLength({ max: 150 })
+    .withMessage('Reason should not exceed 150 characters')
+];
+
+const approveRequestValidator: ValidationChain[] = [
+  body('projectId')
+    .notEmpty()
+    .withMessage('Project Id is required')
+    .isMongoId()
+    .withMessage('Project Id should be valid Mongo Id'),
+  body('requester')
+    .notEmpty()
+    .withMessage('Requester is required')
+    .isMongoId()
+    .withMessage('Requester should be valid Mongo Id'),
+  body('action')
+    .notEmpty()
+    .withMessage('Action is required')
+    .isIn(['Approve', 'Decline'])
+    .withMessage('Enter a valid action')
+];
+
+export {
+  createProjectValidator,
+  joinRequestValidator,
+  approveRequestValidator
+};
