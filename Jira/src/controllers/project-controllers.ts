@@ -10,6 +10,7 @@ import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
 import { UserDocument } from '../models/User';
 
+// @access  Private
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
@@ -33,7 +34,7 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
       description,
       visibility,
       creator: req.userId,
-      members: [],
+      members: [req.userId],
       joinRequests: [],
       sprints: []
     });
@@ -51,6 +52,42 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
+// @access Private
+const getJoinRequests: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  try {
+    if (req.project?.creator.toString() !== req.userId?.toString()) {
+      return errorHandler(
+        'Only project creator can view join requests',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const project = await req.project?.populate({
+      path: 'joinRequests',
+      populate: {
+        path: 'requester',
+        select: 'email'
+      }
+    });
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched join requests for the project',
+      joinRequests: project?.joinRequests
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get join requests curently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+// @access  Private
 const requestToJoinProject: RequestHandler = async (
   req: customRequest,
   res,
@@ -59,13 +96,13 @@ const requestToJoinProject: RequestHandler = async (
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
-  const { projectId, reason } = req.body as {
-    projectId: string;
+  const { projectCode } = req.params as { projectCode: string };
+  const { reason } = req.body as {
     reason: string;
   };
 
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectCode: projectCode });
     if (!project) {
       return errorHandler(
         'Project not found with this Id',
@@ -102,6 +139,7 @@ const requestToJoinProject: RequestHandler = async (
   }
 };
 
+// @access  Private
 const approveJoinRequest: RequestHandler = async (
   req: customRequest,
   res,
@@ -110,8 +148,8 @@ const approveJoinRequest: RequestHandler = async (
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
-  const { projectCode, action } = req.body as {
-    projectCode: string;
+  const { projectCode } = req.params as { projectCode: string };
+  const { action } = req.body as {
     action: string;
   };
 
@@ -165,4 +203,9 @@ const approveJoinRequest: RequestHandler = async (
   }
 };
 
-export { createProject, requestToJoinProject, approveJoinRequest };
+export {
+  createProject,
+  getJoinRequests,
+  requestToJoinProject,
+  approveJoinRequest
+};

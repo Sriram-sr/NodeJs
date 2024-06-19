@@ -10,6 +10,7 @@ import {
 import { User, generateToken } from '../models/User';
 import { JWTSECUREKEY, JWTEXPIRY } from '../utils/constants';
 
+// @access  Public
 const signupUser: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
@@ -46,6 +47,7 @@ const signupUser: RequestHandler = async (req, res, next) => {
   }
 };
 
+// @access  Public
 const signinUser: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
@@ -86,6 +88,7 @@ const signinUser: RequestHandler = async (req, res, next) => {
   }
 };
 
+// @access  Public
 const forgotPasswordHandler: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
@@ -119,6 +122,7 @@ const forgotPasswordHandler: RequestHandler = async (req, res, next) => {
   }
 };
 
+// @access  Public
 const resetPasswordHandler: RequestHandler = async (req, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
@@ -155,6 +159,7 @@ const resetPasswordHandler: RequestHandler = async (req, res, next) => {
   }
 };
 
+// @access  Public
 const getUsers: RequestHandler = async (req, res, next) => {
   const { page } = req.query as { page?: number };
   const currentPage = page || 1;

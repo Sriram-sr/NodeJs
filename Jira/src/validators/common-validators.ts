@@ -1,5 +1,21 @@
-import { ValidationChain, body } from 'express-validator';
+import { ValidationChain, body, param } from 'express-validator';
 import { User } from '../models/User';
+import { Project } from '../models/Project';
+
+export const projectCodeValidator: ValidationChain = param('projectCode').custom(
+  async (code: string, { req }) => {
+    const codePrefix = code.slice(0, 2);
+    if (codePrefix !== codePrefix.toUpperCase()) {
+      throw new Error('Enter a valid project code');
+    }
+    const project = await Project.findOne({ projectCode: code });
+    if (!project) {
+      throw new Error('Project not found with this code');
+    }
+    req.project = project;
+    return true;
+  }
+);
 
 const createProjectValidator: ValidationChain[] = [
   body('projectCodePrefix')
@@ -28,11 +44,7 @@ const createProjectValidator: ValidationChain[] = [
 ];
 
 const joinRequestValidator: ValidationChain[] = [
-  body('projectId')
-    .notEmpty()
-    .withMessage('Project Id is required')
-    .isMongoId()
-    .withMessage('Project Id should be valid Mongo Id'),
+  projectCodeValidator,
   body('reason')
     .notEmpty()
     .withMessage('Reason is required')
@@ -41,16 +53,7 @@ const joinRequestValidator: ValidationChain[] = [
 ];
 
 const approveRequestValidator: ValidationChain[] = [
-  body('projectCode')
-    .notEmpty()
-    .withMessage('Project code is required')
-    .custom((code: string) => {
-      const codePrefix = code.slice(0, 2);
-      if (codePrefix !== codePrefix.toUpperCase()) {
-        throw new Error('Enter a valid project code');
-      }
-      return true;
-    }),
+  projectCodeValidator,
   body('requester')
     .notEmpty()
     .withMessage('Requester is required')
