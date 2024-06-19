@@ -5,7 +5,7 @@ import { SprintDocument } from './Sprint';
 interface JoinRequest {
   requester: UserDocument;
   reason: string;
-  status: 'Requested' | 'Approved';
+  status: 'Requested' | 'Approved' | 'Declined';
 }
 
 interface ProjectDocument extends Document {
@@ -64,7 +64,7 @@ const projectSchema = new Schema<ProjectDocument>(
         },
         status: {
           type: String,
-          enum: ['Requested', 'Approved'],
+          enum: ['Requested', 'Approved', 'Declined'],
           required: true
         }
       }

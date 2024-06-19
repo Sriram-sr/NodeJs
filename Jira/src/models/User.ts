@@ -19,6 +19,7 @@ interface UserDocument extends Document {
   email: string;
   password: string;
   notifications: Array<Notification>;
+  activeProjects: Array<string>;
   resetPasswordToken?: string;
   resetPasswordTokenExpiry?: Date;
 }
@@ -49,6 +50,11 @@ const userSchema = new Schema<UserDocument>(
           enum: ['read', 'unread'],
           required: true
         }
+      }
+    ],
+    activeProjects: [
+      {
+        type: String
       }
     ],
     resetPasswordToken: String,

@@ -27,12 +27,6 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
       { $inc: { count: 1 } },
       { new: true }
     );
-    console.log(
-      'count is ',
-      projectCount?.count,
-      'and',
-      `${projectCodePrefix}${projectCount?.count}`
-    );
     const project = await Project.create({
       projectCode: `${projectCodePrefix}${projectCount?.count}`,
       title,
@@ -79,6 +73,16 @@ const requestToJoinProject: RequestHandler = async (
         next
       );
     }
+    const existingRequest = project.joinRequests.find(
+      request => request.requester.toString() === req.userId?.toString()
+    );
+    if (existingRequest) {
+      return errorHandler(
+        'User already requested for joining project',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
     project.joinRequests.unshift({
       requester: req.userId!,
       reason: reason,
@@ -106,14 +110,13 @@ const approveJoinRequest: RequestHandler = async (
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
-  const { projectId, requester, action } = req.body as {
-    projectId: string;
-    requester: UserDocument;
+  const { projectCode, action } = req.body as {
+    projectCode: string;
     action: string;
   };
 
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectCode: projectCode });
     if (!project) {
       return errorHandler(
         'Project not found with this Id',
@@ -129,7 +132,8 @@ const approveJoinRequest: RequestHandler = async (
       );
     }
     const userRequestIdx = project.joinRequests.findIndex(
-      request => request.requester.toString() === requester.toString()
+      request =>
+        request.requester.toString() === req.joinRequester?._id!.toString()
     );
     if (!(userRequestIdx >= 0)) {
       return errorHandler(
@@ -139,12 +143,18 @@ const approveJoinRequest: RequestHandler = async (
       );
     }
     if (action === 'Approve') {
-      project.members.push(requester);
+      const requesterId = req.joinRequester?._id as UserDocument;
+      project.members.push(requesterId);
       project.joinRequests[userRequestIdx].status = 'Approved';
+      req.joinRequester?.activeProjects.push(projectCode);
+      await req.joinRequester?.save();
     } else if (action === 'Decline') {
       project.joinRequests[userRequestIdx].status = 'Declined';
     }
     await project.save();
+    res.status(HttpStatus.OK).json({
+      message: `Successfully ${action}d the join request`
+    });
   } catch (err) {
     errorHandler(
       'Something went wrong, could not process this request curently',

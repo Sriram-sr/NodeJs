@@ -29,7 +29,8 @@ const signupUser: RequestHandler = async (req, res, next) => {
     const newUser = await User.create({
       email: email,
       password: hashedPassword,
-      notifications: []
+      notifications: [],
+      activeProjects: []
     });
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully registered user',
@@ -178,4 +179,10 @@ const getUsers: RequestHandler = async (req, res, next) => {
   }
 };
 
-export { signupUser, signinUser, forgotPasswordHandler, resetPasswordHandler, getUsers };
+export {
+  signupUser,
+  signinUser,
+  forgotPasswordHandler,
+  resetPasswordHandler,
+  getUsers
+};

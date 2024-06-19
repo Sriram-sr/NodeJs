@@ -6,6 +6,7 @@ import { UserDocument } from '../models/User';
 
 export interface customRequest extends Request {
   userId?: UserDocument;
+  joinRequester?: UserDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {

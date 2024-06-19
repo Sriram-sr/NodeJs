@@ -1,4 +1,5 @@
 import { ValidationChain, body } from 'express-validator';
+import { User } from '../models/User';
 
 const createProjectValidator: ValidationChain[] = [
   body('projectCodePrefix')
@@ -40,16 +41,28 @@ const joinRequestValidator: ValidationChain[] = [
 ];
 
 const approveRequestValidator: ValidationChain[] = [
-  body('projectId')
+  body('projectCode')
     .notEmpty()
-    .withMessage('Project Id is required')
-    .isMongoId()
-    .withMessage('Project Id should be valid Mongo Id'),
+    .withMessage('Project code is required')
+    .custom((code: string) => {
+      const codePrefix = code.slice(0, 2);
+      if (codePrefix !== codePrefix.toUpperCase()) {
+        throw new Error('Enter a valid project code');
+      }
+      return true;
+    }),
   body('requester')
     .notEmpty()
     .withMessage('Requester is required')
     .isMongoId()
-    .withMessage('Requester should be valid Mongo Id'),
+    .withMessage('Requester should be valid Mongo Id')
+    .custom(async (userId: string, { req }) => {
+      const requester = await User.findById(userId);
+      if (!requester) {
+        throw new Error('Requester is not a valid user');
+      }
+      req.joinRequester = requester;
+    }),
   body('action')
     .notEmpty()
     .withMessage('Action is required')
