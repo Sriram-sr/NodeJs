@@ -11,6 +11,7 @@ import {
   approveJoinRequest,
   createProject,
   getJoinRequests,
+  removeProjectMember,
   requestToJoinProject
 } from '../controllers/project-controllers';
 import { checkProjectCreator } from '../middlewares/common-middlewares';
@@ -21,6 +22,14 @@ router.route('/').post(isAuth, createProjectValidator, createProject);
 router
   .route('/:projectCode/add-member')
   .post(isAuth, projectCodeValidator, checkProjectCreator, addProjectMember);
+router
+  .route('/:projectCode/remove-member')
+  .delete(
+    isAuth,
+    projectCodeValidator,
+    checkProjectCreator,
+    removeProjectMember
+  );
 router
   .route('/:projectCode/request')
   .get(isAuth, projectCodeValidator, checkProjectCreator, getJoinRequests)

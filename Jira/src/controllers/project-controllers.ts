@@ -213,10 +213,44 @@ const addProjectMember: RequestHandler = async (
   }
 };
 
+const removeProjectMember: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { memberId } = req.body as { memberId: UserDocument };
+  try {
+    const existingMemberIdx = req.project?.members.findIndex(
+      member => member.toString() === memberId.toString()
+    );
+    if (!(existingMemberIdx! >= 0)) {
+      return errorHandler(
+        'User not already present as a member',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    req.project?.members.splice(existingMemberIdx!, 1);
+    const updatedProject = await req.project?.save();
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully added member to the project',
+      updatedProject
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add member curently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   createProject,
   getJoinRequests,
   requestToJoinProject,
   approveJoinRequest,
-  addProjectMember
+  addProjectMember,
+  removeProjectMember
 };
