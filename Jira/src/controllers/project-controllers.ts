@@ -59,13 +59,6 @@ const getJoinRequests: RequestHandler = async (
   next
 ) => {
   try {
-    if (req.project?.creator.toString() !== req.userId?.toString()) {
-      return errorHandler(
-        'Only project creator can view join requests',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
     const project = await req.project?.populate({
       path: 'joinRequests',
       populate: {
@@ -148,32 +141,16 @@ const approveJoinRequest: RequestHandler = async (
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
-  const { projectCode } = req.params as { projectCode: string };
   const { action } = req.body as {
     action: string;
   };
 
   try {
-    const project = await Project.findOne({ projectCode: projectCode });
-    if (!project) {
-      return errorHandler(
-        'Project not found with this Id',
-        HttpStatus.NOT_FOUND,
-        next
-      );
-    }
-    if (project.creator.toString() !== req.userId?.toString()) {
-      return errorHandler(
-        'Only creator of the project can approve/decline requests',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
-    const userRequestIdx = project.joinRequests.findIndex(
+    const userRequestIdx = req.project?.joinRequests.findIndex(
       request =>
         request.requester.toString() === req.joinRequester?._id!.toString()
     );
-    if (!(userRequestIdx >= 0)) {
+    if (!(userRequestIdx! >= 0)) {
       return errorHandler(
         'User has not requested to join yet',
         HttpStatus.BAD_REQUEST,
@@ -182,14 +159,14 @@ const approveJoinRequest: RequestHandler = async (
     }
     if (action === 'Approve') {
       const requesterId = req.joinRequester?._id as UserDocument;
-      project.members.push(requesterId);
-      project.joinRequests[userRequestIdx].status = 'Approved';
-      req.joinRequester?.activeProjects.push(projectCode);
+      req.project?.members.push(requesterId);
+      req.project!.joinRequests[userRequestIdx!].status = 'Approved';
+      req.joinRequester?.activeProjects.push(req.project?.projectCode!);
       await req.joinRequester?.save();
     } else if (action === 'Decline') {
-      project.joinRequests[userRequestIdx].status = 'Declined';
+      req.project!.joinRequests[userRequestIdx!].status = 'Declined';
     }
-    await project.save();
+    await req.project?.save();
     res.status(HttpStatus.OK).json({
       message: `Successfully ${action}d the join request`
     });
@@ -203,9 +180,43 @@ const approveJoinRequest: RequestHandler = async (
   }
 };
 
+const addProjectMember: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { memberId } = req.body as { memberId: UserDocument };
+  try {
+    const existingMember = req.project?.members.find(
+      member => member.toString() === memberId.toString()
+    );
+    if (existingMember) {
+      return errorHandler(
+        'User already member of this project',
+        HttpStatus.CONFLICT,
+        next
+      );
+    }
+    req.project?.members.push(memberId);
+    const updatedProject = await req.project?.save();
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully added member to the project',
+      updatedProject
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add member curently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   createProject,
   getJoinRequests,
   requestToJoinProject,
-  approveJoinRequest
+  approveJoinRequest,
+  addProjectMember
 };
