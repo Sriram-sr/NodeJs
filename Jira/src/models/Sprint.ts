@@ -36,7 +36,23 @@ const sprintSchema = new Schema<SprintDocument>(
     goal: {
       type: String,
       required: true
-    }
+    },
+    creator: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: 'Project',
+      required: true
+    },
+    tasks: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Task'
+      }
+    ]
   },
   {
     timestamps: true

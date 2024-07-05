@@ -9,6 +9,7 @@ import { Project } from '../models/Project';
 import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
 import { UserDocument } from '../models/User';
+import { Sprint } from '../models/Sprint';
 
 // @access  Private
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
@@ -23,13 +24,13 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
   };
 
   try {
-    const projectCount = await Counter.findOneAndUpdate(
+    const projectCounter = await Counter.findOneAndUpdate(
       { modelName: 'Project', field: 'projectId' },
       { $inc: { count: 1 } },
       { new: true }
     );
     const project = await Project.create({
-      projectCode: `${projectCodePrefix}${projectCount?.count}`,
+      projectCode: `${projectCodePrefix}${projectCounter?.count}`,
       title,
       description,
       visibility,
@@ -185,7 +186,11 @@ const addProjectMember: RequestHandler = async (
   res,
   next
 ) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
   const { memberId } = req.body as { memberId: UserDocument };
+
   try {
     const existingMember = req.project?.members.find(
       member => member.toString() === memberId.toString()
@@ -218,7 +223,11 @@ const removeProjectMember: RequestHandler = async (
   res,
   next
 ) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
   const { memberId } = req.body as { memberId: UserDocument };
+
   try {
     const existingMemberIdx = req.project?.members.findIndex(
       member => member.toString() === memberId.toString()
@@ -246,11 +255,65 @@ const removeProjectMember: RequestHandler = async (
   }
 };
 
+const createSprint: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+  const { title, goal, startDate, endDate } = req.body as {
+    title: string;
+    goal: string;
+    startDate: Date;
+    endDate: Date;
+  };
+
+  try {
+    const projectMember = req.project?.members.find(
+      member => member.toString() === req.userId?.toString()
+    );
+    if (!projectMember) {
+      return errorHandler(
+        'Only members of the project are allowed to create sprints',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const sprintCounter = await Counter.findOneAndUpdate(
+      { modelName: 'Sprint', field: 'sprintId' },
+      { $inc: { count: 1 } },
+      { new: true }
+    );
+    const newSprint = await Sprint.create({
+      sprintId: `SP${sprintCounter?.count}`,
+      title,
+      startDate,
+      endDate,
+      goal,
+      creator: req.userId,
+      project: req.project?._id,
+      tasks: []
+    });
+    req.project?.sprints.push(newSprint);
+    await req.project?.save();
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully created a sprint',
+      newSprint
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not create sprint curently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   createProject,
   getJoinRequests,
   requestToJoinProject,
   approveJoinRequest,
   addProjectMember,
-  removeProjectMember
+  removeProjectMember,
+  createSprint
 };

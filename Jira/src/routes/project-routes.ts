@@ -3,13 +3,15 @@ import isAuth from '../middlewares/is-auth';
 import {
   approveRequestValidator,
   createProjectValidator,
+  createSprintValidator,
   joinRequestValidator,
   projectCodeValidator
-} from '../validators/common-validators';
+} from '../validators/project-validators';
 import {
   addProjectMember,
   approveJoinRequest,
   createProject,
+  createSprint,
   getJoinRequests,
   removeProjectMember,
   requestToJoinProject
@@ -42,5 +44,8 @@ router
     checkProjectCreator,
     approveJoinRequest
   );
+router
+  .route('/:projectCode/sprint')
+  .post(isAuth, projectCodeValidator, createSprintValidator, createSprint);
 
 export default router;
