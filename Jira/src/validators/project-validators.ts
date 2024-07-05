@@ -73,17 +73,6 @@ const approveRequestValidator: ValidationChain[] = [
     .withMessage('Enter a valid action')
 ];
 
-/**
- *   sprintId: string;
-  title: string;
-  startDate: Date;
-  endDate: Date;
-  goal: string;
-  creator: UserDocument;
-  project: ProjectDocument;
-  tasks: Array<TaskDocument>;
- */
-
 const createSprintValidator: ValidationChain[] = [
   body('title')
     .notEmpty()
