@@ -8,7 +8,7 @@ import {
 import { Project } from '../models/Project';
 import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
-import { UserDocument } from '../models/User';
+import { User, UserDocument } from '../models/User';
 import { Sprint } from '../models/Sprint';
 
 // @access  Private
@@ -120,6 +120,14 @@ const requestToJoinProject: RequestHandler = async (
       status: 'Requested'
     });
     project.save();
+    const projectCreator = await User.findById(project.creator);
+    projectCreator?.notifications.unshift({
+      category: 'General',
+      status: 'unread',
+      message: `${req.email} requested to join project ${project.projectCode}`,
+      createdAt: new Date(Date.now())
+    });
+    await projectCreator?.save();
     res.status(HttpStatus.OK).json({
       message: 'Successfully requested to join the project'
     });
@@ -163,10 +171,22 @@ const approveJoinRequest: RequestHandler = async (
       req.project?.members.push(requesterId);
       req.project!.joinRequests[userRequestIdx!].status = 'Approved';
       req.joinRequester?.activeProjects.push(req.project?.projectCode!);
-      await req.joinRequester?.save();
+      req.joinRequester?.notifications.unshift({
+        category: 'General',
+        status: 'unread',
+        message: `Your request to join project ${req.project?.projectCode} has been approved`,
+        createdAt: new Date(Date.now())
+      });
     } else if (action === 'Decline') {
       req.project!.joinRequests[userRequestIdx!].status = 'Declined';
+      req.joinRequester?.notifications.unshift({
+        category: 'General',
+        status: 'unread',
+        message: `Your request to join project ${req.project?.projectCode} has been declined`,
+        createdAt: new Date(Date.now())
+      });
     }
+    await req.joinRequester?.save();
     await req.project?.save();
     res.status(HttpStatus.OK).json({
       message: `Successfully ${action}d the join request`
@@ -181,6 +201,7 @@ const approveJoinRequest: RequestHandler = async (
   }
 };
 
+// @access  Private
 const addProjectMember: RequestHandler = async (
   req: customRequest,
   res,
@@ -204,6 +225,14 @@ const addProjectMember: RequestHandler = async (
     }
     req.project?.members.push(memberId);
     const updatedProject = await req.project?.save();
+    const projectMember = await User.findById(memberId);
+    projectMember?.notifications.unshift({
+      category: 'General',
+      status: 'unread',
+      message: `You were added as a member of project ${req.project?.projectCode}`,
+      createdAt: new Date(Date.now())
+    });
+    await projectMember?.save();
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully added member to the project',
       updatedProject
@@ -218,6 +247,7 @@ const addProjectMember: RequestHandler = async (
   }
 };
 
+// @access  Private
 const removeProjectMember: RequestHandler = async (
   req: customRequest,
   res,
@@ -239,15 +269,23 @@ const removeProjectMember: RequestHandler = async (
         next
       );
     }
+    const projectMember = await User.findById(memberId);
+    projectMember?.notifications.unshift({
+      category: 'General',
+      status: 'unread',
+      message: `You were removed from project ${req.project?.projectCode}`,
+      createdAt: new Date(Date.now())
+    });
+    await projectMember?.save();
     req.project?.members.splice(existingMemberIdx!, 1);
     const updatedProject = await req.project?.save();
     res.status(HttpStatus.CREATED).json({
-      message: 'Successfully added member to the project',
+      message: 'Successfully removed member from the project',
       updatedProject
     });
   } catch (err) {
     errorHandler(
-      'Something went wrong, could not add member curently',
+      'Something went wrong, could not remove member curently',
       HttpStatus.INTERNAL_SERVER_ERROR,
       next,
       err
@@ -255,6 +293,7 @@ const removeProjectMember: RequestHandler = async (
   }
 };
 
+// @access  Private
 const createSprint: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);

@@ -7,6 +7,7 @@ import { ProjectDocument } from '../models/Project';
 
 export interface customRequest extends Request {
   userId?: UserDocument;
+  email?: string;
   joinRequester?: UserDocument;
   project?: ProjectDocument;
 }
@@ -23,6 +24,7 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
   try {
     const decodedToken = verify(token, JWTSECUREKEY) as {
       _id: UserDocument;
+      email: string;
     };
     if (!decodedToken) {
       return errorHandler(
@@ -32,6 +34,7 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
       );
     }
     req.userId = decodedToken._id;
+    req.email = decodedToken.email;
   } catch (err) {
     if (err instanceof TokenExpiredError) {
       return errorHandler('JWT token expired', HttpStatus.UNAUTHORIZED, next);

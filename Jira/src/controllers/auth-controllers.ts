@@ -9,6 +9,7 @@ import {
 } from '../utils/error-handlers';
 import { User, generateToken } from '../models/User';
 import { JWTSECUREKEY, JWTEXPIRY } from '../utils/constants';
+import { customRequest } from '../middlewares/is-auth';
 
 // @access  Public
 const signupUser: RequestHandler = async (req, res, next) => {
@@ -184,10 +185,40 @@ const getUsers: RequestHandler = async (req, res, next) => {
   }
 };
 
+// @access  Public
+const getNotifications: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+
+  try {
+    const user = await User.findById(req.userId);
+    const notifications = user?.notifications.slice(skip, limit);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched notifications',
+      notifications: notifications
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get notifications currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   signupUser,
   signinUser,
   forgotPasswordHandler,
   resetPasswordHandler,
-  getUsers
+  getUsers,
+  getNotifications
 };

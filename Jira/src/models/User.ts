@@ -10,9 +10,11 @@ interface Notification {
     | 'TaskComment'
     | 'UserMention'
     | 'SprintStartEnd'
-    | 'SprintDeadLine';
+    | 'SprintDeadLine'
+    | 'General';
   status: 'read' | 'unread';
   message: string;
+  createdAt: Date;
 }
 
 interface UserDocument extends Document {
@@ -43,11 +45,17 @@ const userSchema = new Schema<UserDocument>(
         },
         category: {
           type: String,
+          default: 'unread',
           required: true
         },
         status: {
           type: String,
           enum: ['read', 'unread'],
+          required: true
+        },
+        createdAt: {
+          type: Date,
+          default: new Date(Date.now()),
           required: true
         }
       }
