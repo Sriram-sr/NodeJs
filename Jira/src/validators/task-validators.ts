@@ -1,7 +1,6 @@
-import { body, ValidationChain } from 'express-validator';
+import { body, param, ValidationChain } from 'express-validator';
 
-
-export const createTaskValidator: ValidationChain[] = [
+const createTaskValidator: ValidationChain[] = [
   body('title')
     .notEmpty()
     .withMessage('Title is required')
@@ -33,3 +32,14 @@ export const createTaskValidator: ValidationChain[] = [
     .isMongoId()
     .withMessage('Enter a valid Mongo Id for assignee')
 ];
+
+const taskIdValidater: ValidationChain = param('taskId').custom(
+  (value: string) => {
+    if (!value.startsWith('TS')) {
+      throw new Error('Task Id is invalid');
+    }
+    return true;
+  }
+);
+
+export { createTaskValidator, taskIdValidater };

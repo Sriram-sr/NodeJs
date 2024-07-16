@@ -10,12 +10,9 @@ import { customRequest } from '../middlewares/is-auth';
 import { Sprint } from '../models/Sprint';
 import { Project } from '../models/Project';
 import { Counter } from '../middlewares/mongoose-counter';
+import { UserDocument } from '../models/User';
 
-export const createTask: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const createTask: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
@@ -91,3 +88,85 @@ export const createTask: RequestHandler = async (
     );
   }
 };
+
+const getSingleTask: RequestHandler = async (req, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+  const { taskId } = req.params as { taskId: string };
+
+  try {
+    const task = await Task.findOne({ taskId: taskId });
+    // TODO: Extract assignee and creator email and test negative scenario
+    if (!task) {
+      return errorHandler(
+        'Task not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched task',
+      task
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get task currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const assignTask: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+  const { assignee } = req.body as { assignee: UserDocument };
+  const { taskId } = req.params as { taskId: string };
+
+  try {
+    const task = await Task.findOne({ taskId: taskId });
+    if (!task) {
+      return errorHandler(
+        'Task not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    const taskProject = await Project.findById(task.project);
+    if (!taskProject || taskProject.status === 'inactive') {
+      return errorHandler(
+        'Cannot assign as task project is inactive/unavailable',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    const projectMember = taskProject.members.find(
+      member => member._id?.toString() === req.userId?.toString()
+    );
+    if (!projectMember) {
+      return errorHandler(
+        'Cannot assign task to anyone if you are not project member',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    task.assignee = assignee;
+    await task.save();
+    // TODO: To add assigned task in user collection and notification part
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully assigned task'
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not assign task currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export { createTask, getSingleTask, assignTask };
