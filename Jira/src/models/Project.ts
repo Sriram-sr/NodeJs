@@ -17,6 +17,7 @@ interface ProjectDocument extends Document {
   members: Array<UserDocument>;
   joinRequests: Array<JoinRequest>;
   sprints: Array<SprintDocument>;
+  status: 'active' | 'inactive';
 }
 
 const projectSchema = new Schema<ProjectDocument>(
@@ -74,7 +75,13 @@ const projectSchema = new Schema<ProjectDocument>(
         type: Schema.Types.ObjectId,
         ref: 'Sprint'
       }
-    ]
+    ],
+    status: {
+      type: String,
+      enum: ['active', 'inactive'],
+      default: 'active',
+      required: true
+    }
   },
   {
     timestamps: true

@@ -2,21 +2,39 @@ import { Document, Schema, model } from 'mongoose';
 import { SprintDocument } from './Sprint';
 import { UserDocument } from './User';
 import { CommentDocument } from './Comment';
+import { ProjectDocument } from './Project';
 
 interface TaskDocument extends Document {
+  taskId: string;
   title: string;
   description: string;
   status: 'Todo' | 'InProgress' | 'InReview' | 'Done';
   priority: 'High' | 'Medium' | 'Low';
-  dueDate: Date;
+  dueDate?: Date;
   creator: UserDocument;
   sprint: SprintDocument;
-  assignee: UserDocument;
+  project: ProjectDocument;
+  assignee?: UserDocument;
   comments: Array<CommentDocument>;
+}
+
+export interface TaskInput {
+  title: string;
+  description: string;
+  priority: string;
+  dueDate?: Date;
+  sprintId: SprintDocument;
+  projectId: ProjectDocument;
+  assignee?: UserDocument;
 }
 
 const taskSchema = new Schema<TaskDocument>(
   {
+    taskId: {
+      type: String,
+      unique: true,
+      required: true
+    },
     title: {
       type: String,
       required: true
@@ -37,6 +55,11 @@ const taskSchema = new Schema<TaskDocument>(
     },
     dueDate: {
       type: Date,
+      default: null
+    },
+    creator: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
       required: true
     },
     sprint: {
@@ -44,10 +67,15 @@ const taskSchema = new Schema<TaskDocument>(
       ref: 'Sprint',
       required: true
     },
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: 'Project',
+      required: true
+    },
     assignee: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true
+      default: null
     },
     comments: [
       {

@@ -46,6 +46,12 @@ router
   );
 router
   .route('/:projectCode/sprint')
-  .post(isAuth, projectCodeValidator, createSprintValidator, createSprint);
+  .post(
+    isAuth,
+    projectCodeValidator,
+    checkProjectCreator,
+    createSprintValidator,
+    createSprint
+  );
 
 export default router;

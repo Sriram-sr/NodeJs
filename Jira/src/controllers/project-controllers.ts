@@ -37,7 +37,8 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
       creator: req.userId,
       members: [req.userId],
       joinRequests: [],
-      sprints: []
+      sprints: [],
+      status:'active'
     });
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created project',
