@@ -1,0 +1,8 @@
+/node_modules
+/dist
+/.vscode
+
+.env
+package-lock.json
+tsconfig.json
+nodemon.json
