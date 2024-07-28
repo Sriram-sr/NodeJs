@@ -1,9 +1,13 @@
 import { Router } from 'express';
-import { signupValidator } from '../validators/common-validators';
-import { signupUser } from '../controllers/auth-controllers';
+import {
+  signinValidator,
+  signupValidator
+} from '../validators/common-validators';
+import { signinUser, signupUser } from '../controllers/auth-controllers';
 
 const router = Router();
 
 router.route('/signup').post(signupValidator, signupUser);
+router.route('/signin').post(signinValidator, signinUser);
 
 export default router;
