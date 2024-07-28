@@ -1,12 +1,23 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { connect } from 'mongoose';
+import logger from 'morgan';
+import Router from './router';
 import { MONGODB_URI, PORT } from './utils/constants';
+import { HttpError, HttpStatus } from './utils/error-handlers';
 
 const app = express();
 
-app.use('/', (_, res, _1) => {
-  res.status(200).json({
-    message: 'Express/Mongoose configuration success'
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(logger('dev'));
+
+app.use('/api/v1', Router);
+
+app.use((error: HttpError, _: Request, res: Response, _1: NextFunction) => {
+  const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
+  res.status(statusCode).json({
+    message: error.message,
+    data: error.data
   });
 });
 
