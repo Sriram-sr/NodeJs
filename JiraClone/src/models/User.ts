@@ -1,4 +1,6 @@
-import { Document, Types, Schema, model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
+import { ProjectDocument } from './Project';
+import { TaskDocument } from './Task';
 
 interface Notification {
   category:
@@ -19,8 +21,8 @@ interface Notification {
 interface UserDocument extends Document {
   email: string;
   password: string;
-  activeProjects: Array<Types.ObjectId>;
-  assignedTasks: Array<Types.ObjectId>;
+  activeProjects: Array<ProjectDocument>;
+  assignedTasks: Array<TaskDocument>;
   notifications: Array<Notification>;
   resetPasswordToken?: string;
   resetPasswordExpiry?: Date;
@@ -80,4 +82,4 @@ const userSchema = new Schema<UserDocument>(
 
 const User = model<UserDocument>('User', userSchema);
 
-export default User;
+export { User, UserDocument };

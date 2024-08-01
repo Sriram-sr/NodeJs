@@ -7,7 +7,7 @@ import {
   inputValidationHandler,
   errorHandler
 } from '../utils/error-handlers';
-import User from '../models/User';
+import { User } from '../models/User';
 import { JWT_EXPIRY_TIME, JWT_SECURE_KEY } from '../utils/constants';
 
 const signupUser: RequestHandler = async (req, res, next) => {
