@@ -6,7 +6,6 @@ import { MONGODB_URI, PORT } from './utils/constants';
 import { HttpError, HttpStatus } from './utils/error-handlers';
 
 const app = express();
-// Express
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
