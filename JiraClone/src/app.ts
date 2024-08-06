@@ -4,6 +4,7 @@ import logger from 'morgan';
 import Router from './router';
 import { MONGODB_URI, PORT } from './utils/constants';
 import { HttpError, HttpStatus } from './utils/error-handlers';
+import { initialiseCounter } from './middlewares/mongoose-counter';
 
 const app = express();
 
@@ -25,6 +26,7 @@ connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to Mongodb...');
     app.listen(PORT);
+    initialiseCounter('Project', 'projectId');
   })
   .catch(err => {
     console.log('Error while connecting to Mongodb, ', err);
