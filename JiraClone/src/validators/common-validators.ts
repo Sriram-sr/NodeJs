@@ -7,19 +7,23 @@ const emailValidator: ValidationChain = body('email')
   .withMessage('Enter a valid email')
   .normalizeEmail();
 
-const signupValidator: ValidationChain[] = [
-  emailValidator,
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required')
-    .trim()
-    .isLength({ min: 6, max: 15 })
-    .withMessage('Password should not exceed 6 to 15 characters')
-];
+const passwordValidator: ValidationChain = body('password')
+  .notEmpty()
+  .withMessage('Password is required')
+  .trim()
+  .isLength({ min: 6, max: 15 })
+  .withMessage('Password should not exceed 6 to 15 characters');
+
+const signupValidator: ValidationChain[] = [emailValidator, passwordValidator];
 
 const signinValidator: ValidationChain[] = [
   emailValidator,
   body('password').notEmpty().withMessage('Password is required').trim()
+];
+
+const resetPasswordValidator: ValidationChain[] = [
+  passwordValidator,
+  body('token').notEmpty().withMessage('Token is required')
 ];
 
 const createProjectValidator: ValidationChain[] = [
@@ -52,4 +56,10 @@ const createProjectValidator: ValidationChain[] = [
     .withMessage('Enter a valid field for visibility')
 ];
 
-export { signupValidator, signinValidator, createProjectValidator };
+export {
+  emailValidator,
+  signupValidator,
+  signinValidator,
+  resetPasswordValidator,
+  createProjectValidator
+};

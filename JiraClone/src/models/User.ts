@@ -1,4 +1,5 @@
 import { Document, Schema, model } from 'mongoose';
+import { randomBytes } from 'crypto';
 import { ProjectDocument } from './Project';
 import { TaskDocument } from './Task';
 
@@ -82,4 +83,15 @@ const userSchema = new Schema<UserDocument>(
 
 const User = model<UserDocument>('User', userSchema);
 
-export { User, UserDocument };
+const generateToken = (bytes: number): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    randomBytes(bytes, (err, buffer) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(buffer.toString('hex'));
+      }
+    });
+  });
+};
+export { User, UserDocument, generateToken };
