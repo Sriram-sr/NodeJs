@@ -7,6 +7,7 @@ import {
 } from '../validators/common-validators';
 import {
   forgotPasswordHandler,
+  getUsers,
   resetPasswordHandler,
   signinUser,
   signupUser
@@ -20,5 +21,6 @@ router.route('/forgot-password').post(emailValidator, forgotPasswordHandler);
 router
   .route('/reset-password')
   .post(resetPasswordValidator, resetPasswordHandler);
+router.route('/users').get(getUsers);
 
 export default router;

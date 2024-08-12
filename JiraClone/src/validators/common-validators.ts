@@ -1,4 +1,5 @@
-import { body, ValidationChain } from 'express-validator';
+import { body, param, ValidationChain } from 'express-validator';
+import { Project } from '../models/Project';
 
 const emailValidator: ValidationChain = body('email')
   .notEmpty()
@@ -56,10 +57,23 @@ const createProjectValidator: ValidationChain[] = [
     .withMessage('Enter a valid field for visibility')
 ];
 
+const projectIdValidator: ValidationChain = param('projectId')
+  .isMongoId()
+  .withMessage('Project Id is not a valid MongoId')
+  .custom(async (projectId: string, { req }) => {
+    const project = await Project.findById(projectId);
+    if (!project) {
+      throw new Error('Project not found with this Id');
+    }
+    req.project = project;
+    return true;
+  });
+
 export {
   emailValidator,
   signupValidator,
   signinValidator,
   resetPasswordValidator,
-  createProjectValidator
+  createProjectValidator,
+  projectIdValidator
 };

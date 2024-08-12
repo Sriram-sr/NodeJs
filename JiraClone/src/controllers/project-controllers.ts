@@ -9,11 +9,7 @@ import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
 import { Project } from '../models/Project';
 
-export const createProject: RequestHandler = async (
-  req: customRequest,
-  res,
-  next
-) => {
+const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
@@ -53,3 +49,41 @@ export const createProject: RequestHandler = async (
     );
   }
 };
+
+const requestToJoin: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+  const { reason } = req.body as { reason: string };
+
+  try {
+    const existingRequest = req.project?.joinRequests.find(
+      request => request.requester.toString() === req._id?.toString()
+    );
+    if (existingRequest) {
+      return errorHandler(
+        'User already requested to join this project',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    req.project?.joinRequests.push({
+      requester: req._id!,
+      reason: reason,
+      status: 'Requested'
+    });
+    await req.project?.save();
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully requested for joining project'
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not process this currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export { createProject, requestToJoin };
