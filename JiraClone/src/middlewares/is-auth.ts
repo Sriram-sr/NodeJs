@@ -1,5 +1,5 @@
 import { Request, RequestHandler } from 'express';
-import { verify, TokenExpiredError } from 'jsonwebtoken';
+import { verify, TokenExpiredError, JsonWebTokenError } from 'jsonwebtoken';
 import { errorHandler, HttpStatus } from '../utils/error-handlers';
 import { JWT_SECURE_KEY } from '../utils/constants';
 import { UserDocument } from '../models/User';
@@ -39,6 +39,13 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
   } catch (err) {
     if (err instanceof TokenExpiredError) {
       return errorHandler('JWT token expired', HttpStatus.UNAUTHORIZED, next);
+    }
+    if (err instanceof JsonWebTokenError) {
+      return errorHandler(
+        'Invalid JWT token is used',
+        HttpStatus.UNAUTHORIZED,
+        next
+      );
     }
     errorHandler(
       'Something went wrong, cannot process this request',

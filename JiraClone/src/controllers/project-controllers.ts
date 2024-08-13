@@ -50,6 +50,43 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
+const getJoinRequests: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+  try {
+    if (req.project?.creator.toString() !== req._id?.toString()) {
+      return errorHandler(
+        'Only project creator can view join requests',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const project = await req.project?.populate({
+      path: 'joinRequests',
+      populate: {
+        path: 'requester',
+        select: 'email -_id'
+      }
+    });
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched join requests',
+      joinRequests: project?.joinRequests
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get requests currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 const requestToJoin: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
@@ -86,4 +123,4 @@ const requestToJoin: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
-export { createProject, requestToJoin };
+export { createProject, getJoinRequests, requestToJoin };
