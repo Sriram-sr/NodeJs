@@ -6,6 +6,7 @@ interface JoinRequest {
   requester: UserDocument;
   reason: string;
   status: 'Requested' | 'Approved' | 'Declined';
+  _id?: string;
 }
 
 interface ProjectDocument extends Document {
@@ -90,4 +91,4 @@ const projectSchema = new Schema<ProjectDocument>(
 
 const Project = model<ProjectDocument>('Project', projectSchema);
 
-export { Project, ProjectDocument };
+export { Project, ProjectDocument, JoinRequest };

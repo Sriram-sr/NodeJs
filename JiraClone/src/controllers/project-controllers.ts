@@ -7,7 +7,7 @@ import {
 } from '../utils/error-handlers';
 import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
-import { Project } from '../models/Project';
+import { JoinRequest, Project } from '../models/Project';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -123,4 +123,55 @@ const requestToJoin: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
-export { createProject, getJoinRequests, requestToJoin };
+const processJoinRequest: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+  const { requestId } = req.params as { projectId: string; requestId: string };
+  const { action } = req.body as { action: 'Approved' | 'Declined' };
+
+  try {
+    if (req.project?.creator.toString() !== req._id?.toString()) {
+      return errorHandler(
+        'Only project creator can process join requests',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const joinRequestIdx = req.project?.joinRequests.findIndex(
+      request => request._id?.toString() === requestId
+    );
+    if (!(joinRequestIdx! >= 0)) {
+      return errorHandler(
+        'Join request with this Id is not found',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    const joinRequest = req.project?.joinRequests[
+      joinRequestIdx!
+    ] as JoinRequest;
+    joinRequest!.status = action;
+    if (action === 'Approved') {
+      req.project?.members.push(joinRequest.requester);
+    }
+    req.project!.joinRequests[joinRequestIdx!] = joinRequest;
+    req.project?.save();
+    res.status(HttpStatus.OK).json({
+      message: `Successfully ${action} the join request`
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not process this currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export { createProject, getJoinRequests, requestToJoin, processJoinRequest };

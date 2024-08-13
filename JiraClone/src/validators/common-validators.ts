@@ -69,11 +69,21 @@ const projectIdValidator: ValidationChain = param('projectId')
     return true;
   });
 
+const processJoinRequestValidator: ValidationChain[] = [
+  projectIdValidator,
+  body('action')
+    .notEmpty()
+    .withMessage('Action is required')
+    .isIn(['Approved', 'Declined'])
+    .withMessage('Enter a valid request action')
+];
+
 export {
   emailValidator,
   signupValidator,
   signinValidator,
   resetPasswordValidator,
   createProjectValidator,
-  projectIdValidator
+  projectIdValidator,
+  processJoinRequestValidator
 };
