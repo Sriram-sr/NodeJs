@@ -8,6 +8,7 @@ import {
 import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
 import { JoinRequest, Project } from '../models/Project';
+import { User } from '../models/User';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -110,6 +111,14 @@ const requestToJoin: RequestHandler = async (req: customRequest, res, next) => {
       status: 'Requested'
     });
     await req.project?.save();
+    const projectCreator = await User.findById(req.project?.creator);
+    projectCreator?.notifications.push({
+      category: 'General',
+      message: `${req.email} requested to join the project`,
+      isRead: false,
+      createdAt: new Date()
+    });
+    await projectCreator?.save();
     res.status(HttpStatus.OK).json({
       message: 'Successfully requested for joining project'
     });
@@ -161,6 +170,14 @@ const processJoinRequest: RequestHandler = async (
     }
     req.project!.joinRequests[joinRequestIdx!] = joinRequest;
     req.project?.save();
+    const requester = await User.findById(joinRequest.requester);
+    requester?.notifications.push({
+      category: 'General',
+      message: `${req.email} ${action} your request to join the project`,
+      isRead: false,
+      createdAt: new Date()
+    });
+    await requester?.save();
     res.status(HttpStatus.OK).json({
       message: `Successfully ${action} the join request`
     });
