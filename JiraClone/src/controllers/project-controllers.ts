@@ -7,8 +7,8 @@ import {
 } from '../utils/error-handlers';
 import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
-import { JoinRequest, Project } from '../models/Project';
-import { User } from '../models/User';
+import { JoinRequest, Project, ProjectDocument } from '../models/Project';
+import { User, UserDocument } from '../models/User';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -37,6 +37,9 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
       sprints: [],
       status: 'active'
     });
+    const creator = await User.findById(req._id);
+    creator?.activeProjects.push(project._id as ProjectDocument);
+    await creator?.save();
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created project',
       project
@@ -101,7 +104,7 @@ const requestToJoin: RequestHandler = async (req: customRequest, res, next) => {
     if (existingRequest) {
       return errorHandler(
         'User already requested to join this project',
-        HttpStatus.BAD_REQUEST,
+        HttpStatus.CONFLICT,
         next
       );
     }
@@ -142,6 +145,7 @@ const processJoinRequest: RequestHandler = async (
   }
   const { requestId } = req.params as { projectId: string; requestId: string };
   const { action } = req.body as { action: 'Approved' | 'Declined' };
+  const projectId = req.project?._id as ProjectDocument;
 
   try {
     if (req.project?.creator.toString() !== req._id?.toString()) {
@@ -165,12 +169,13 @@ const processJoinRequest: RequestHandler = async (
       joinRequestIdx!
     ] as JoinRequest;
     joinRequest!.status = action;
+    const requester = await User.findById(joinRequest.requester);
     if (action === 'Approved') {
       req.project?.members.push(joinRequest.requester);
+      requester?.activeProjects.unshift(projectId);
     }
     req.project!.joinRequests[joinRequestIdx!] = joinRequest;
     req.project?.save();
-    const requester = await User.findById(joinRequest.requester);
     requester?.notifications.push({
       category: 'General',
       message: `${req.email} ${action} your request to join the project`,
@@ -191,4 +196,59 @@ const processJoinRequest: RequestHandler = async (
   }
 };
 
-export { createProject, getJoinRequests, requestToJoin, processJoinRequest };
+const addMember: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+  const memberToAdd = req.memberToAdd?._id as UserDocument;
+  const projectId = req.project?._id as ProjectDocument;
+
+  try {
+    if (req.project?.creator.toString() !== req._id?.toString()) {
+      return errorHandler(
+        'Only project creator can add new members',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const existingMember = req.project?.members.find(
+      member => member.toString() === req.memberToAdd?._id?.toString()
+    );
+    if (existingMember) {
+      return errorHandler(
+        'User is already a project member',
+        HttpStatus.CONFLICT,
+        next
+      );
+    }
+
+    req.project?.members.push(memberToAdd);
+    await req.project?.save();
+    req.memberToAdd?.activeProjects.unshift(projectId);
+    req.memberToAdd?.notifications.push({
+      category: 'General',
+      message: `${req.email} added you as a member of a project`,
+      isRead: false,
+      createdAt: new Date()
+    });
+    await req.memberToAdd?.save();
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully added user as project member'
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add member currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export {
+  createProject,
+  getJoinRequests,
+  requestToJoin,
+  processJoinRequest,
+  addMember
+};

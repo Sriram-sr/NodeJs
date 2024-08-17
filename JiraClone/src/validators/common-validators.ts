@@ -1,5 +1,6 @@
 import { body, param, ValidationChain } from 'express-validator';
 import { Project } from '../models/Project';
+import { User } from '../models/User';
 
 const emailValidator: ValidationChain = body('email')
   .notEmpty()
@@ -78,6 +79,18 @@ const processJoinRequestValidator: ValidationChain[] = [
     .withMessage('Enter a valid request action')
 ];
 
+const addMemberValidation: ValidationChain = param('memberId')
+  .isMongoId()
+  .withMessage('Member Id is not a valid Mongo Id')
+  .custom(async (memberId: string, { req }) => {
+    const user = await User.findById(memberId);
+    if (!user) {
+      throw new Error('No valid user found with this member Id');
+    }
+    req.memberToAdd = user;
+    return true;
+  });
+
 export {
   emailValidator,
   signupValidator,
@@ -85,5 +98,6 @@ export {
   resetPasswordValidator,
   createProjectValidator,
   projectIdValidator,
-  processJoinRequestValidator
+  processJoinRequestValidator,
+  addMemberValidation
 };
