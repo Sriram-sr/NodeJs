@@ -26,7 +26,6 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
     const decodedToken = verify(token, JWT_SECURE_KEY) as {
       email: string;
       _id: UserDocument;
-      user: UserDocument;
     };
     if (!decodedToken) {
       return errorHandler(

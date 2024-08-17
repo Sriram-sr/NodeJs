@@ -145,7 +145,6 @@ const processJoinRequest: RequestHandler = async (
   }
   const { requestId } = req.params as { projectId: string; requestId: string };
   const { action } = req.body as { action: 'Approved' | 'Declined' };
-  const projectId = req.project?._id as ProjectDocument;
 
   try {
     if (req.project?.creator.toString() !== req._id?.toString()) {
@@ -172,7 +171,7 @@ const processJoinRequest: RequestHandler = async (
     const requester = await User.findById(joinRequest.requester);
     if (action === 'Approved') {
       req.project?.members.push(joinRequest.requester);
-      requester?.activeProjects.unshift(projectId);
+      requester?.activeProjects.unshift(req.project?._id as ProjectDocument);
     }
     req.project!.joinRequests[joinRequestIdx!] = joinRequest;
     req.project?.save();
@@ -200,8 +199,6 @@ const addMember: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
-  const memberToAdd = req.memberToAdd?._id as UserDocument;
-  const projectId = req.project?._id as ProjectDocument;
 
   try {
     if (req.project?.creator.toString() !== req._id?.toString()) {
@@ -222,9 +219,11 @@ const addMember: RequestHandler = async (req: customRequest, res, next) => {
       );
     }
 
-    req.project?.members.push(memberToAdd);
+    req.project?.members.push(req.memberToAdd?._id as UserDocument);
     await req.project?.save();
-    req.memberToAdd?.activeProjects.unshift(projectId);
+    req.memberToAdd?.activeProjects.unshift(
+      req.project?._id as ProjectDocument
+    );
     req.memberToAdd?.notifications.push({
       category: 'General',
       message: `${req.email} added you as a member of a project`,
