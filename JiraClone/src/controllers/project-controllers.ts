@@ -62,14 +62,8 @@ const getJoinRequests: RequestHandler = async (
   if (!validationResult(req).isEmpty()) {
     return inputValidationHandler(validationResult(req).array(), next);
   }
+
   try {
-    if (req.project?.creator.toString() !== req._id?.toString()) {
-      return errorHandler(
-        'Only project creator can view join requests',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
     const project = await req.project?.populate({
       path: 'joinRequests',
       populate: {
@@ -147,13 +141,6 @@ const processJoinRequest: RequestHandler = async (
   const { action } = req.body as { action: 'Approved' | 'Declined' };
 
   try {
-    if (req.project?.creator.toString() !== req._id?.toString()) {
-      return errorHandler(
-        'Only project creator can process join requests',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
     const joinRequestIdx = req.project?.joinRequests.findIndex(
       request => request._id?.toString() === requestId
     );
@@ -201,15 +188,8 @@ const addMember: RequestHandler = async (req: customRequest, res, next) => {
   }
 
   try {
-    if (req.project?.creator.toString() !== req._id?.toString()) {
-      return errorHandler(
-        'Only project creator can add new members',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
     const existingMember = req.project?.members.find(
-      member => member.toString() === req.memberToAdd?._id?.toString()
+      member => member.toString() === req.projectMember?._id?.toString()
     );
     if (existingMember) {
       return errorHandler(
@@ -218,19 +198,18 @@ const addMember: RequestHandler = async (req: customRequest, res, next) => {
         next
       );
     }
-
-    req.project?.members.push(req.memberToAdd?._id as UserDocument);
+    req.project?.members.push(req.projectMember?._id as UserDocument);
     await req.project?.save();
-    req.memberToAdd?.activeProjects.unshift(
+    req.projectMember?.activeProjects.unshift(
       req.project?._id as ProjectDocument
     );
-    req.memberToAdd?.notifications.push({
+    req.projectMember?.notifications.push({
       category: 'General',
       message: `${req.email} added you as a member of a project`,
       isRead: false,
       createdAt: new Date()
     });
-    await req.memberToAdd?.save();
+    await req.projectMember?.save();
     res.status(HttpStatus.OK).json({
       message: 'Successfully added user as project member'
     });
@@ -244,10 +223,60 @@ const addMember: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
+const removeMember: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
+
+  try {
+    const existingMemberIdx = req.project?.members.findIndex(
+      member => member.toString() === req.projectMember?._id?.toString()
+    );
+    if (!(existingMemberIdx! >= 0)) {
+      return errorHandler(
+        'User is not a project member already to remove',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    req.project?.members.splice(existingMemberIdx!, 1);
+    req.projectMember?.notifications.push({
+      category: 'General',
+      message: `${req.email} removed you as a member from the project`,
+      isRead: false,
+      createdAt: new Date()
+    });
+    const projectToRemoveIdx = req.projectMember?.activeProjects.findIndex(
+      project => project.toString() === req.project?._id?.toString()
+    );
+    if (!(projectToRemoveIdx! >= 0)) {
+      return errorHandler(
+        "Project not found in member's active projects",
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    req.projectMember?.activeProjects.splice(projectToRemoveIdx!, 1);
+    await req.project?.save();
+    await req.projectMember?.save();
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully removed member from the project'
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not remove member currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   createProject,
   getJoinRequests,
   requestToJoin,
   processJoinRequest,
-  addMember
+  addMember,
+  removeMember
 };

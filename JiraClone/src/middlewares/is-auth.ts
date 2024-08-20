@@ -10,7 +10,7 @@ interface customRequest extends Request {
   _id?: UserDocument;
   projectPrefix?: string;
   project?: ProjectDocument;
-  memberToAdd?: UserDocument;
+  projectMember?: UserDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
