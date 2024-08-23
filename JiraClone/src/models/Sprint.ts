@@ -1,7 +1,6 @@
 import { Document, Schema, model } from 'mongoose';
 import { ProjectDocument } from './Project';
 import { TaskDocument } from './Task';
-import { UserDocument } from './User';
 
 interface SprintDocument extends Document {
   sprintId: string;
@@ -9,7 +8,6 @@ interface SprintDocument extends Document {
   startDate: Date;
   endDate: Date;
   goal: string;
-  creator: UserDocument;
   project: ProjectDocument;
   tasks: Array<TaskDocument>;
 }
@@ -35,11 +33,6 @@ const sprintSchema = new Schema<SprintDocument>(
     },
     goal: {
       type: String,
-      required: true
-    },
-    creator: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
       required: true
     },
     project: {

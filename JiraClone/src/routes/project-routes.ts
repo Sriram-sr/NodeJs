@@ -4,7 +4,8 @@ import {
   memberIdValidation,
   createProjectValidator,
   processJoinRequestValidator,
-  projectIdValidator
+  projectIdValidator,
+  createSprintValidator
 } from '../validators/project-validators';
 import {
   addMember,
@@ -12,7 +13,8 @@ import {
   getJoinRequests,
   processJoinRequest,
   removeMember,
-  requestToJoin
+  requestToJoin,
+  createSprint
 } from '../controllers/project-controllers';
 import { checkProjectCreator } from '../middlewares/common-middlewares';
 
@@ -48,6 +50,15 @@ router
     processJoinRequestValidator,
     checkProjectCreator,
     processJoinRequest
+  );
+router
+  .route('/:projectId/sprint')
+  .post(
+    isAuth,
+    projectIdValidator,
+    checkProjectCreator,
+    createSprintValidator,
+    createSprint
   );
 
 export default router;

@@ -65,9 +65,33 @@ const memberIdValidation: ValidationChain = param('memberId')
     return true;
   });
 
+const createSprintValidator: ValidationChain[] = [
+  body('title')
+    .notEmpty()
+    .withMessage('Title is required')
+    .isLength({ max: 500 })
+    .withMessage('Title should not exceed 500 characters'),
+  body('startDate')
+    .notEmpty()
+    .withMessage('Start date is required')
+    .isDate()
+    .withMessage('Enter a valid date'),
+  body('endDate')
+    .notEmpty()
+    .withMessage('End date is required')
+    .isDate()
+    .withMessage('Enter a valid date'),
+  body('goal')
+    .notEmpty()
+    .withMessage('Goal is required')
+    .isLength({ max: 1000 })
+    .withMessage('Goal should not exceed 1000 characters')
+];
+
 export {
   createProjectValidator,
   projectIdValidator,
   processJoinRequestValidator,
-  memberIdValidation
+  memberIdValidation,
+  createSprintValidator
 };
