@@ -60,5 +60,7 @@ router
     createSprintValidator,
     createSprint
   );
+router
+  .route('/:projectId/sprint/:sprintId')
 
 export default router;
