@@ -28,6 +28,7 @@ connect(MONGODB_URI)
     app.listen(PORT);
     initialiseCounter('Project', 'projectId');
     initialiseCounter('Sprint', 'sprintId');
+    initialiseCounter('Task', 'taskId');
   })
   .catch(err => {
     console.log('Error while connecting to Mongodb, ', err);

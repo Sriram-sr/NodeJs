@@ -72,5 +72,6 @@ export {
   emailValidator,
   signupValidator,
   signinValidator,
-  resetPasswordValidator
+  resetPasswordValidator,
+  createTaskValidator
 };

@@ -9,7 +9,7 @@ import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
 import { JoinRequest, Project, ProjectDocument } from '../models/Project';
 import { User, UserDocument } from '../models/User';
-import { Sprint } from '../models/Sprint';
+import { Sprint, SprintDocument } from '../models/Sprint';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -299,18 +299,20 @@ const createSprint: RequestHandler = async (req: customRequest, res, next) => {
       project: req.project?._id,
       tasks: []
     });
+    req.project?.sprints.unshift(sprint._id as SprintDocument);
     req.project?.members.map(async (member: UserDocument) => {
       if (member.toString() !== req.project?.creator.toString()) {
         const memberToNotify = await User.findById(member);
         memberToNotify?.notifications.push({
           category: 'SprintStartEnd',
-          message: `${req.email} created new sprint for the project where you are a member`,
+          message: `${req.email} created new sprint for the project ${req.project?.projectCode} where you are a member`,
           isRead: false,
           createdAt: new Date()
         });
         await memberToNotify?.save();
       }
     });
+    await req.project?.save();
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created sprint',
       sprint
