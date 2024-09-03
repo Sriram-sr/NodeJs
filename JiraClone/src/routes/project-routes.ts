@@ -14,7 +14,8 @@ import {
   processJoinRequest,
   removeMember,
   requestToJoin,
-  createSprint
+  createSprint,
+  getSprint
 } from '../controllers/project-controllers';
 import { checkProjectCreator } from '../middlewares/common-middlewares';
 
@@ -62,5 +63,6 @@ router
   );
 router
   .route('/:projectId/sprint/:sprintId')
+  .get(isAuth, projectIdValidator, getSprint);
 
 export default router;

@@ -5,10 +5,11 @@ import {
   HttpStatus,
   inputValidationHandler
 } from '../utils/error-handlers';
-import { Task, TaskInput } from '../models/Task';
+import { Task, TaskDocument, TaskInput } from '../models/Task';
 import { Counter } from '../middlewares/mongoose-counter';
 import { customRequest } from '../middlewares/is-auth';
 import { User } from '../models/User';
+import { Sprint } from '../models/Sprint';
 
 const createTask: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -53,6 +54,9 @@ const createTask: RequestHandler = async (req: customRequest, res, next) => {
       });
       await assignedUser?.save();
     }
+    const sprintOfTask = await Sprint.findById(sprintId);
+    sprintOfTask?.tasks.unshift(task._id as TaskDocument);
+    await sprintOfTask?.save();
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created task',
       task

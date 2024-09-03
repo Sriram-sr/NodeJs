@@ -327,6 +327,51 @@ const createSprint: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
+const getSprint: RequestHandler = async (req: customRequest, res, next) => {
+  const { sprintId } = req.params as { sprintId: string };
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 5;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+
+  try {
+    const projectMember = req.project?.members.find(
+      member => member.toString() === req._id?.toString()
+    );
+    if (req.project?.visibility === 'private' && !projectMember) {
+      return errorHandler(
+        'Only member of private project can view the sprint',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const sprint = await Sprint.findById(sprintId).populate({
+      path: 'tasks',
+      select: 'title'
+    });
+    if (!sprint) {
+      return errorHandler(
+        'Sprint not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    sprint.tasks = sprint.tasks.slice(skip, limit);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched sprint',
+      sprint
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get sprint currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 export {
   createProject,
   getJoinRequests,
@@ -334,5 +379,6 @@ export {
   processJoinRequest,
   addMember,
   removeMember,
-  createSprint
+  createSprint,
+  getSprint
 };
