@@ -3,47 +3,47 @@ import { ProjectDocument } from './Project';
 import { TaskDocument } from './Task';
 
 interface SprintDocument extends Document {
-    title: string;
-    startDate: Date;
-    endDate: Date;
-    goal: string;
-    project: ProjectDocument;
-    tasks: Array<TaskDocument>;
+  title: string;
+  startDate: Date;
+  endDate: Date;
+  goal: string;
+  project: ProjectDocument;
+  tasks: Array<TaskDocument>;
 }
 
 const sprintSchema = new Schema<SprintDocument>(
-    {
-        title: {
-            type: String,
-            required: true
-        },
-        startDate: {
-            type: Date,
-            required: true
-        },
-        endDate: {
-            type: Date,
-            required: true
-        },
-        goal: {
-            type: String,
-            required: true
-        },
-        project: {
-            type: Schema.Types.ObjectId,
-            ref: 'Project',
-            required: true
-        },
-        tasks: [
-            {
-                type: Schema.Types.ObjectId,
-                ref: 'Task'
-            }
-        ]
+  {
+    title: {
+      type: String,
+      required: true
     },
-    {
-        timestamps: true
-    }
+    startDate: {
+      type: Date,
+      required: true
+    },
+    endDate: {
+      type: Date,
+      required: true
+    },
+    goal: {
+      type: String,
+      required: true
+    },
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: 'Project',
+      required: true
+    },
+    tasks: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Task'
+      }
+    ]
+  },
+  {
+    timestamps: true
+  }
 );
 
 const Sprint = model<SprintDocument>('Sprint', sprintSchema);

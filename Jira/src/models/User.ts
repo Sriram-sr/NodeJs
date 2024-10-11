@@ -3,11 +3,11 @@ import { randomBytes } from 'crypto';
 
 interface Notification {
   category:
-  | 'General'
-  | 'SprintCreation'
-  | 'SprintDeadline'
-  | 'TaskAssignment'
-  | 'UserMention';
+    | 'General'
+    | 'SprintCreation'
+    | 'SprintDeadline'
+    | 'TaskAssignment'
+    | 'UserMention';
   message: string;
   isRead: boolean;
   createdAt: Date;

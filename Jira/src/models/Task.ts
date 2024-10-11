@@ -27,56 +27,57 @@ export interface TaskInput {
   assignee?: UserDocument;
 }
 
-const taskSchema = new Schema<TaskDocument>({
-  taskId: {
-    type: String,
-    unique: true,
-    required: true
-  },
-  title: {
-    type: String,
-    required: true
-  },
-  description: {
-    type: String,
-    required: true
-  },
-  status: {
-    type: String,
-    enum: ['Todo', 'InProgress', 'InReview', 'Done'],
-    required: true
-  },
-  priority: {
-    type: String,
-    enum: ['High', 'Medium', 'Low'],
-    required: true
-  },
-  dueDate: {
-    type: Date,
-    default: null
-  },
-  creator: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  sprint: {
-    type: Schema.Types.ObjectId,
-    ref: 'Sprint',
-    required: true
-  },
-  assignee: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
-  },
-  comments: [
-    {
+const taskSchema = new Schema<TaskDocument>(
+  {
+    taskId: {
+      type: String,
+      unique: true,
+      required: true
+    },
+    title: {
+      type: String,
+      required: true
+    },
+    description: {
+      type: String,
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['Todo', 'InProgress', 'InReview', 'Done'],
+      required: true
+    },
+    priority: {
+      type: String,
+      enum: ['High', 'Medium', 'Low'],
+      required: true
+    },
+    dueDate: {
+      type: Date,
+      default: null
+    },
+    creator: {
       type: Schema.Types.ObjectId,
-      ref: 'Comment'
-    }
-  ]
-},
+      ref: 'User',
+      required: true
+    },
+    sprint: {
+      type: Schema.Types.ObjectId,
+      ref: 'Sprint',
+      required: true
+    },
+    assignee: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    comments: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Comment'
+      }
+    ]
+  },
   {
     timestamps: true
   }
