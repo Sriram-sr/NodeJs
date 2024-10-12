@@ -4,7 +4,7 @@ import { TokenExpiredError, verify } from 'jsonwebtoken';
 import { JWT_SECURE_KEY } from '../utils/constants';
 import { UserDocument } from '../models/User';
 
-export interface customRequest extends Request {
+interface customRequest extends Request {
   userId?: UserDocument;
   email?: string;
 }
@@ -46,4 +46,4 @@ const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
   next();
 };
 
-export default isAuthenticated;
+export { customRequest, isAuthenticated as isAuth };

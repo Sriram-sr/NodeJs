@@ -9,7 +9,6 @@ interface JoinRequest {
 }
 
 interface ProjectDocument extends Document {
-  projectCode: string;
   title: string;
   description: string;
   visibility: 'public' | 'private';
