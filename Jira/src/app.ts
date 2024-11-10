@@ -22,7 +22,7 @@ app.use((error: HttpError, _: Request, res: Response, _1: NextFunction) => {
 
 connect(MONGODB_URI)
   .then(() => {
-    console.log('Connected to Mongodb...');
+    console.log('Connected to Mongodb....');
     app.listen(PORT);
   })
   .catch(err => {
