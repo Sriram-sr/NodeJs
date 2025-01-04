@@ -16,7 +16,7 @@ app.use((error: HttpError, _: Request, res: Response, _1: NextFunction) => {
   const statusCode = error.statusCode || HttpStatus.INTERNAL_SERVER_ERROR;
   res.status(statusCode).json({
     message: error.message,
-    data: error.data
+    data: error.data,
   });
 });
 

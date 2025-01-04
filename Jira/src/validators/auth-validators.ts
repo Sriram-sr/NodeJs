@@ -14,11 +14,11 @@ const passwordValidator: ValidationChain = body('password')
   .withMessage('Password should not exceed 6 to 15 characters')
   .trim();
 
-const signupValidator: ValidationChain[] = [emailValidator];
+const signupValidator: ValidationChain[] = [emailValidator, passwordValidator];
 
 const signinValidator: ValidationChain[] = [
   emailValidator,
-  body('password').notEmpty().withMessage('Password is required').trim()
+  body('password').notEmpty().withMessage('Password is required').trim(),
 ];
 
 const resetPasswordValidator: ValidationChain[] = [
@@ -27,12 +27,12 @@ const resetPasswordValidator: ValidationChain[] = [
     .withMessage('Token is required')
     .isLength({ max: 64, min: 64 })
     .withMessage('Token should be 64 characters in length'),
-  passwordValidator
+  passwordValidator,
 ];
 
 export {
   emailValidator,
   signupValidator,
   signinValidator,
-  resetPasswordValidator
+  resetPasswordValidator,
 };

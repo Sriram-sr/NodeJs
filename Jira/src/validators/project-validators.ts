@@ -14,7 +14,13 @@ const createProjectValidator: ValidationChain[] = [
   body('visibility')
     .notEmpty()
     .withMessage('Visibility is required')
-    .isIn(['public', 'private'])
+    .isIn(['public', 'private']),
 ];
 
-export { createProjectValidator };
+const projectRequestValidator: ValidationChain = body('reason')
+  .notEmpty()
+  .withMessage('Reason is required')
+  .isLength({ max: 200 })
+  .withMessage('Reason should not exceed 200 characters');
+
+export { createProjectValidator, projectRequestValidator };
