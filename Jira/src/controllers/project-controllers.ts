@@ -3,7 +3,7 @@ import { validationResult } from 'express-validator';
 import {
   errorHandler,
   HttpStatus,
-  inputValidationHandler,
+  inputValidationHandler
 } from '../utils/error-handlers';
 import { Project } from '../models/Project';
 import { customRequest } from '../middlewares/is-auth';
@@ -27,11 +27,11 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
       members: [req.userId],
       joinRequests: [],
       sprints: [],
-      status: 'active',
+      status: 'active'
     });
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully created project',
-      project,
+      project
     });
   } catch (err) {
     errorHandler(
@@ -76,11 +76,11 @@ const requestToJoinProject: RequestHandler = async (
     project.joinRequests.unshift({
       requester: req.userId!,
       reason: reason,
-      status: 'Requested',
+      status: 'Requested'
     });
     await project.save();
     res.status(HttpStatus.CREATED).json({
-      message: 'Successfully requested to join project',
+      message: 'Successfully requested to join project'
     });
   } catch (err) {
     errorHandler(

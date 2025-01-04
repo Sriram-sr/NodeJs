@@ -2,11 +2,11 @@ import { Router } from 'express';
 import { isAuth } from '../middlewares/is-auth';
 import {
   createProjectValidator,
-  projectRequestValidator,
+  projectRequestValidator
 } from '../validators/project-validators';
 import {
   createProject,
-  requestToJoinProject,
+  requestToJoinProject
 } from '../controllers/project-controllers';
 
 const router = Router();

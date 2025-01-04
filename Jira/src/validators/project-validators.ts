@@ -14,7 +14,7 @@ const createProjectValidator: ValidationChain[] = [
   body('visibility')
     .notEmpty()
     .withMessage('Visibility is required')
-    .isIn(['public', 'private']),
+    .isIn(['public', 'private'])
 ];
 
 const projectRequestValidator: ValidationChain = body('reason')

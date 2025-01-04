@@ -5,7 +5,7 @@ import { sign } from 'jsonwebtoken';
 import {
   HttpStatus,
   errorHandler,
-  inputValidationHandler,
+  inputValidationHandler
 } from '../utils/error-handlers';
 import { User, generateToken } from '../models/User';
 import { JWT_SECURE_KEY, JWT_EXPIRY_TIME } from '../utils/constants';
@@ -29,11 +29,11 @@ const signupUser: RequestHandler = async (req, res, next) => {
     const newUser = await User.create({
       email: email,
       password: hashedPassword,
-      notifications: [],
+      notifications: []
     });
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully registered user',
-      newUser,
+      newUser
     });
   } catch (err) {
     errorHandler(
@@ -69,11 +69,11 @@ const signinUser: RequestHandler = async (req, res, next) => {
       );
     }
     const token = sign({ email: user.email, _id: user._id }, JWT_SECURE_KEY, {
-      expiresIn: JWT_EXPIRY_TIME,
+      expiresIn: JWT_EXPIRY_TIME
     });
     res.status(HttpStatus.OK).json({
       message: 'Successfully signed in',
-      token,
+      token
     });
   } catch (err) {
     errorHandler(
@@ -106,7 +106,7 @@ const forgotPasswordHandler: RequestHandler = async (req, res, next) => {
     await user.save();
     res.status(HttpStatus.OK).json({
       message: 'Successfuly generated token for resetting password',
-      token,
+      token
     });
   } catch (err) {
     errorHandler(
@@ -127,7 +127,7 @@ const resetPasswordHandler: RequestHandler = async (req, res, next) => {
   try {
     const user = await User.findOne({
       resetPasswordToken: token,
-      resetPasswordTokenExpiry: { $gt: new Date(Date.now()) },
+      resetPasswordTokenExpiry: { $gt: new Date(Date.now()) }
     });
     if (!user) {
       return errorHandler(
@@ -142,7 +142,7 @@ const resetPasswordHandler: RequestHandler = async (req, res, next) => {
     user.resetPasswordTokenExpiry = undefined;
     await user.save();
     res.status(HttpStatus.OK).json({
-      message: 'Successfully changed password',
+      message: 'Successfully changed password'
     });
   } catch (err) {
     errorHandler(
@@ -166,7 +166,7 @@ const getUsers: RequestHandler = async (req, res, next) => {
       .limit(perPage);
     res.status(HttpStatus.OK).json({
       message: 'Successfully fetched users',
-      users,
+      users
     });
   } catch (err) {
     errorHandler(
@@ -183,5 +183,5 @@ export {
   signinUser,
   forgotPasswordHandler,
   resetPasswordHandler,
-  getUsers,
+  getUsers
 };
