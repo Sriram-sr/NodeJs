@@ -43,6 +43,53 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
+const getJoinRequests: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { projectId } = req.params as { projectId: string };
+  const { page } = req.query as { page?: number };
+  const currentPage = page || 1;
+  const perPage = 10;
+  const skip = (currentPage - 1) * perPage;
+  const limit = skip + perPage;
+
+  try {
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return errorHandler(
+        'Requested project not found',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    if (project?.creator.toString() !== req.userId?.toString()) {
+      return errorHandler(
+        'Only creator of the project can get the join requests',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    await project.populate({
+      path: 'joinRequests.requester',
+      select: 'email'
+    });
+    const joinRequests = project.joinRequests.slice(skip, limit);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched join requests',
+      joinRequests
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get join requests currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 const requestToJoinProject: RequestHandler = async (
   req: customRequest,
   res,
@@ -92,4 +139,4 @@ const requestToJoinProject: RequestHandler = async (
   }
 };
 
-export { createProject, requestToJoinProject };
+export { createProject, getJoinRequests, requestToJoinProject };
