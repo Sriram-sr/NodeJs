@@ -23,4 +23,14 @@ const projectRequestValidator: ValidationChain = body('reason')
   .isLength({ max: 200 })
   .withMessage('Reason should not exceed 200 characters');
 
-export { createProjectValidator, projectRequestValidator };
+const processJoinRequestValidator: ValidationChain = body('status')
+  .notEmpty()
+  .withMessage('Status is required')
+  .isIn(['Approved', 'Declined'])
+  .withMessage('Provide a valid status');
+
+export {
+  createProjectValidator,
+  projectRequestValidator,
+  processJoinRequestValidator
+};

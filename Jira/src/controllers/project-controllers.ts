@@ -7,6 +7,7 @@ import {
 } from '../utils/error-handlers';
 import { Project } from '../models/Project';
 import { customRequest } from '../middlewares/is-auth';
+import { UserDocument } from '../models/User';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -139,4 +140,47 @@ const requestToJoinProject: RequestHandler = async (
   }
 };
 
-export { createProject, getJoinRequests, requestToJoinProject };
+const processJoinRequest: RequestHandler = async (req, res, next) => {
+  const { projectId, requesterId } = req.params as {
+    projectId: string;
+    requesterId: string;
+  };
+  const { status } = req.body as { status: string };
+
+  try {
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return errorHandler('Project not found', HttpStatus.NOT_FOUND, next);
+    }
+    const joinRequestIdx = project.joinRequests.findIndex(
+      request => request.requester.toString() === requesterId
+    );
+    if (joinRequestIdx < 0) {
+      return errorHandler('Join request not found', HttpStatus.NOT_FOUND, next);
+    }
+    if (status === 'Approved') {
+      project.joinRequests[joinRequestIdx].status = 'Approved';
+      project.members.unshift(requesterId as unknown as UserDocument);
+    } else {
+      project.joinRequests[joinRequestIdx].status = 'Declined';
+    }
+    await project.save();
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully processed the join request'
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not process join request',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export {
+  createProject,
+  getJoinRequests,
+  requestToJoinProject,
+  processJoinRequest
+};

@@ -2,11 +2,13 @@ import { Router } from 'express';
 import { isAuth } from '../middlewares/is-auth';
 import {
   createProjectValidator,
-  projectRequestValidator
+  projectRequestValidator,
+  processJoinRequestValidator
 } from '../validators/project-validators';
 import {
   createProject,
   getJoinRequests,
+  processJoinRequest,
   requestToJoinProject
 } from '../controllers/project-controllers';
 
@@ -17,5 +19,8 @@ router
   .route('/:projectId/request')
   .get(isAuth, getJoinRequests)
   .post(isAuth, projectRequestValidator, requestToJoinProject);
+router
+  .route('/:projectId/request/:requestId/process')
+  .put(isAuth, processJoinRequestValidator, processJoinRequest);
 
 export default router;
