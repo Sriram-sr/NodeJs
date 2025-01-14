@@ -29,6 +29,7 @@ const signupUser: RequestHandler = async (req, res, next) => {
     const newUser = await User.create({
       email: email,
       password: hashedPassword,
+      activeProjects: [],
       notifications: []
     });
     res.status(HttpStatus.CREATED).json({

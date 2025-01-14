@@ -1,5 +1,6 @@
 import { Document, model, Schema } from 'mongoose';
 import { randomBytes } from 'crypto';
+import { ProjectDocument } from './Project';
 
 interface Notification {
   category:
@@ -17,6 +18,7 @@ interface UserDocument extends Document {
   email: string;
   password: string;
   notifications: Array<Notification>;
+  activeProjects: Array<ProjectDocument>;
   resetPasswordToken?: string;
   resetPasswordTokenExpiry?: Date;
 }
@@ -53,6 +55,15 @@ const userSchema = new Schema<UserDocument>(
         }
       }
     ],
+    activeProjects: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: 'Project'
+        }
+      ],
+      default: []
+    },
     resetPasswordToken: String,
     resetPasswordTokenExpiry: Date
   },

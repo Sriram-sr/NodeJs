@@ -1,4 +1,16 @@
-import { body, ValidationChain } from 'express-validator';
+import { body, param, ValidationChain } from 'express-validator';
+import { Project } from '../models/Project';
+
+const projectIdValidator: ValidationChain = param('projectId')
+  .isMongoId()
+  .withMessage('Provide a valid project ID')
+  .custom(async (projectId: string, { req }) => {
+    const project = await Project.findById(projectId);
+    if (!project) {
+      throw new Error('Project not found');
+    }
+    req.project = project;
+  });
 
 const createProjectValidator: ValidationChain[] = [
   body('title')
@@ -17,7 +29,7 @@ const createProjectValidator: ValidationChain[] = [
     .isIn(['public', 'private'])
 ];
 
-const projectRequestValidator: ValidationChain = body('reason')
+const requestToJoinValidator: ValidationChain = body('reason')
   .notEmpty()
   .withMessage('Reason is required')
   .isLength({ max: 200 })
@@ -30,7 +42,8 @@ const processJoinRequestValidator: ValidationChain = body('status')
   .withMessage('Provide a valid status');
 
 export {
+  projectIdValidator,
   createProjectValidator,
-  projectRequestValidator,
+  requestToJoinValidator,
   processJoinRequestValidator
 };

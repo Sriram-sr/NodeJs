@@ -3,10 +3,12 @@ import { HttpStatus, errorHandler } from '../utils/error-handlers';
 import { TokenExpiredError, verify } from 'jsonwebtoken';
 import { JWT_SECURE_KEY } from '../utils/constants';
 import { UserDocument } from '../models/User';
+import { ProjectDocument } from '../models/Project';
 
 interface customRequest extends Request {
   userId?: UserDocument;
   email?: string;
+  project?: ProjectDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {
