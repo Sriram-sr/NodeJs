@@ -111,6 +111,13 @@ const requestToJoinProject: RequestHandler = async (
         next
       );
     }
+    if (project.creator.toString() === req.userId?.toString()) {
+      return errorHandler(
+        'Creator of the project cannot request to join the project',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
     const existingRequest = project.joinRequests.find(
       request => request.requester.toString() === req.userId?.toString()
     );
@@ -140,7 +147,14 @@ const requestToJoinProject: RequestHandler = async (
   }
 };
 
-const processJoinRequest: RequestHandler = async (req, res, next) => {
+const processJoinRequest: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
   const { projectId, requesterId } = req.params as {
     projectId: string;
     requesterId: string;
@@ -152,21 +166,36 @@ const processJoinRequest: RequestHandler = async (req, res, next) => {
     if (!project) {
       return errorHandler('Project not found', HttpStatus.NOT_FOUND, next);
     }
+    if (project?.creator.toString() !== req.userId?.toString()) {
+      return errorHandler(
+        'Only creator of the project can process join requests',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
     const joinRequestIdx = project.joinRequests.findIndex(
       request => request.requester.toString() === requesterId
     );
     if (joinRequestIdx < 0) {
       return errorHandler('Join request not found', HttpStatus.NOT_FOUND, next);
     }
+    if (project.joinRequests[joinRequestIdx].status !== 'Requested') {
+      return errorHandler(
+        'Join request already processed',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
     if (status === 'Approved') {
       project.joinRequests[joinRequestIdx].status = 'Approved';
-      project.members.unshift(requesterId as unknown as UserDocument);
+      project.members.push(requesterId as unknown as UserDocument);
     } else {
       project.joinRequests[joinRequestIdx].status = 'Declined';
     }
     await project.save();
     res.status(HttpStatus.OK).json({
-      message: 'Successfully processed the join request'
+      message: 'Successfully processed the join request',
+      project
     });
   } catch (err) {
     errorHandler(

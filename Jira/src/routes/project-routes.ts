@@ -20,7 +20,7 @@ router
   .get(isAuth, getJoinRequests)
   .post(isAuth, projectRequestValidator, requestToJoinProject);
 router
-  .route('/:projectId/request/:requestId/process')
+  .route('/:projectId/request/:requesterId/process')
   .put(isAuth, processJoinRequestValidator, processJoinRequest);
 
 export default router;
