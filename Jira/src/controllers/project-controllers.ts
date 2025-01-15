@@ -7,7 +7,7 @@ import {
 } from '../utils/error-handlers';
 import { Project, ProjectDocument } from '../models/Project';
 import { customRequest } from '../middlewares/is-auth';
-import { UserDocument } from '../models/User';
+import { User, UserDocument } from '../models/User';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -49,9 +49,6 @@ const getJoinRequests: RequestHandler = async (
   res,
   next
 ) => {
-  if (!validationResult(req).isEmpty()) {
-    return inputValidationHandler(validationResult(req).array(), next);
-  }
   const { page } = req.query as { page?: number };
   const currentPage = page || 1;
   const perPage = 10;
@@ -60,13 +57,6 @@ const getJoinRequests: RequestHandler = async (
   const project = req.project as ProjectDocument;
 
   try {
-    if (project.creator.toString() !== req.userId?.toString()) {
-      return errorHandler(
-        'Only creator of the project can get the join requests',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
     await project.populate({
       path: 'joinRequests.requester',
       select: 'email'
@@ -139,9 +129,6 @@ const processJoinRequest: RequestHandler = async (
   res,
   next
 ) => {
-  if (!validationResult(req).isEmpty()) {
-    return inputValidationHandler(validationResult(req).array(), next);
-  }
   const { requesterId } = req.params as {
     requesterId: string;
   };
@@ -149,13 +136,6 @@ const processJoinRequest: RequestHandler = async (
 
   try {
     let project = req.project as ProjectDocument;
-    if (project.creator.toString() !== req.userId?.toString()) {
-      return errorHandler(
-        'Only creator of the project can process join requests',
-        HttpStatus.FORBIDDEN,
-        next
-      );
-    }
     const joinRequestIdx = project.joinRequests.findIndex(
       request => request.requester.toString() === requesterId
     );
@@ -172,7 +152,16 @@ const processJoinRequest: RequestHandler = async (
     if (status === 'Approved') {
       project.joinRequests[joinRequestIdx].status = 'Approved';
       project.members.push(requesterId as unknown as UserDocument);
-      // TODO: Add to user's active projects
+      const requester = await User.findById(requesterId);
+      if (!requester) {
+        return errorHandler(
+          'Requested user not found',
+          HttpStatus.NOT_FOUND,
+          next
+        );
+      }
+      requester.activeProjects.push(project._id as ProjectDocument);
+      await requester.save();
     } else {
       project.joinRequests[joinRequestIdx].status = 'Declined';
     }
@@ -191,19 +180,32 @@ const processJoinRequest: RequestHandler = async (
   }
 };
 
-const addMemberToProject: RequestHandler = async (req, res, next) => {
-  const { projectId, memberId } = req.params as {
-    projectId: string;
+const addMemberToProject: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { memberId } = req.params as {
     memberId: string;
   };
-
+  const project = req.project as ProjectDocument;
   try {
-    const project = await Project.findById(projectId);
-    console.log(memberId, res);
-    if (!project) {
-      return errorHandler('Project not found', HttpStatus.NOT_FOUND, next);
+    const member = await User.findById(memberId);
+    if (!member) {
+      return errorHandler(
+        'User not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
     }
-    // TODO: To complete this API
+    project.members.push(memberId as unknown as UserDocument);
+    await project.save();
+    member.activeProjects.push(project._id as ProjectDocument);
+    await member.save();
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully added member to the project',
+      project
+    });
   } catch (err) {
     errorHandler(
       'Something went wrong, could not add member currently',

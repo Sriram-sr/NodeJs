@@ -6,6 +6,7 @@ import {
   requestToJoinValidator,
   processJoinRequestValidator
 } from '../validators/project-validators';
+import { isProjectCreator } from '../middlewares/project-middlewares';
 import {
   addMemberToProject,
   createProject,
@@ -19,7 +20,7 @@ const router = Router();
 router.route('/').post(isAuth, createProjectValidator, createProject);
 router
   .route('/:projectId/request')
-  .get(isAuth, projectIdValidator, getJoinRequests)
+  .get(isAuth, projectIdValidator, isProjectCreator, getJoinRequests)
   .post(
     isAuth,
     projectIdValidator,
@@ -32,10 +33,11 @@ router
     isAuth,
     projectIdValidator,
     processJoinRequestValidator,
+    isProjectCreator,
     processJoinRequest
   );
 router
   .route('/:projectId/add-member/:memberId')
-  .post(isAuth, addMemberToProject);
+  .post(isAuth, projectIdValidator, isProjectCreator, addMemberToProject);
 
 export default router;
