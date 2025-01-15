@@ -8,6 +8,7 @@ import {
 import { Project, ProjectDocument } from '../models/Project';
 import { customRequest } from '../middlewares/is-auth';
 import { User, UserDocument } from '../models/User';
+import { sendNotification } from '../utils/helper';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -111,6 +112,12 @@ const requestToJoinProject: RequestHandler = async (
       status: 'Requested'
     });
     await project.save();
+    await sendNotification(
+      `${req.email} requested to join the project`,
+      'ProjectJoinRequest',
+      project.creator,
+      true
+    );
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully requested to join project'
     });
@@ -149,23 +156,28 @@ const processJoinRequest: RequestHandler = async (
         next
       );
     }
+    const requester = await User.findById(requesterId);
+    if (!requester) {
+      return errorHandler(
+        'Requested user not found',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
     if (status === 'Approved') {
       project.joinRequests[joinRequestIdx].status = 'Approved';
       project.members.push(requesterId as unknown as UserDocument);
-      const requester = await User.findById(requesterId);
-      if (!requester) {
-        return errorHandler(
-          'Requested user not found',
-          HttpStatus.NOT_FOUND,
-          next
-        );
-      }
       requester.activeProjects.push(project._id as ProjectDocument);
       await requester.save();
     } else {
       project.joinRequests[joinRequestIdx].status = 'Declined';
     }
     await project.save();
+    await sendNotification(
+      `${req.email} ${status.toLowerCase()} your join the request`,
+      'ProjectJoinRequest',
+      requester
+    );
     res.status(HttpStatus.OK).json({
       message: 'Successfully processed the join request',
       project
@@ -190,6 +202,16 @@ const addMemberToProject: RequestHandler = async (
   };
   const project = req.project as ProjectDocument;
   try {
+    const existingMember = project.members.find(
+      member => member.toString() === memberId
+    );
+    if (existingMember) {
+      return errorHandler(
+        'User is already a member of the project',
+        HttpStatus.CONFLICT,
+        next
+      );
+    }
     const member = await User.findById(memberId);
     if (!member) {
       return errorHandler(
@@ -202,8 +224,75 @@ const addMemberToProject: RequestHandler = async (
     await project.save();
     member.activeProjects.push(project._id as ProjectDocument);
     await member.save();
+    await sendNotification(
+      `${req.email} added you to the project`,
+      'General',
+      member
+    );
     res.status(HttpStatus.CREATED).json({
       message: 'Successfully added member to the project',
+      project
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not add member currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+const deleteMemberFromProject: RequestHandler = async (
+  req: customRequest,
+  res,
+  next
+) => {
+  const { memberId } = req.params as {
+    memberId: string;
+  };
+  const project = req.project as ProjectDocument;
+
+  try {
+    const user = await User.findById(memberId);
+    if (!user) {
+      return errorHandler(
+        'User not found with this Id',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    const projectMemberIdx = project.members.findIndex(
+      member => member.toString() === user._id?.toString()
+    );
+    if (projectMemberIdx === -1) {
+      return errorHandler(
+        'User is not a member of the project already',
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    project.members.splice(projectMemberIdx, 1);
+    await project.save();
+    const userProjectIdx = user.activeProjects.findIndex(
+      activeProject => activeProject.toString() === project._id?.toString()
+    );
+    if (userProjectIdx === -1) {
+      return errorHandler(
+        "Project not found in user's active projects",
+        HttpStatus.BAD_REQUEST,
+        next
+      );
+    }
+    user.activeProjects.splice(userProjectIdx, 1);
+    await user.save();
+    await sendNotification(
+      `${req.email} removed you from the project`,
+      'General',
+      user
+    );
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully removed member from the project',
       project
     });
   } catch (err) {
@@ -221,5 +310,6 @@ export {
   getJoinRequests,
   requestToJoinProject,
   processJoinRequest,
-  addMemberToProject
+  addMemberToProject,
+  deleteMemberFromProject
 };

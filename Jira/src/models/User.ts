@@ -2,13 +2,16 @@ import { Document, model, Schema } from 'mongoose';
 import { randomBytes } from 'crypto';
 import { ProjectDocument } from './Project';
 
+type NotificationCategory =
+  | 'General'
+  | 'ProjectJoinRequest'
+  | 'SprintCreation'
+  | 'SprintDeadline'
+  | 'TaskAssignment'
+  | 'UserMention';
+
 interface Notification {
-  category:
-    | 'General'
-    | 'SprintCreation'
-    | 'SprintDeadline'
-    | 'TaskAssignment'
-    | 'UserMention';
+  category: NotificationCategory;
   message: string;
   isRead: boolean;
   createdAt: Date;
@@ -85,4 +88,4 @@ const generateToken: (bytes: number) => Promise<string> = bytes => {
 
 const User = model<UserDocument>('User', userSchema);
 
-export { User, UserDocument, generateToken };
+export { User, UserDocument, generateToken, NotificationCategory };

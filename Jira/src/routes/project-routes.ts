@@ -8,11 +8,12 @@ import {
 } from '../validators/project-validators';
 import { isProjectCreator } from '../middlewares/project-middlewares';
 import {
-  addMemberToProject,
   createProject,
   getJoinRequests,
   processJoinRequest,
-  requestToJoinProject
+  requestToJoinProject,
+  addMemberToProject,
+  deleteMemberFromProject
 } from '../controllers/project-controllers';
 
 const router = Router();
@@ -39,5 +40,13 @@ router
 router
   .route('/:projectId/add-member/:memberId')
   .post(isAuth, projectIdValidator, isProjectCreator, addMemberToProject);
+router
+  .route('/:projectId/remove-member/:memberId')
+  .delete(
+    isAuth,
+    projectIdValidator,
+    isProjectCreator,
+    deleteMemberFromProject
+  );
 
 export default router;
