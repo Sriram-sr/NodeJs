@@ -41,9 +41,48 @@ const processJoinRequestValidator: ValidationChain = body('status')
   .isIn(['Approved', 'Declined'])
   .withMessage('Provide a valid status');
 
+const createSprintValidator: ValidationChain[] = [
+  body('title')
+    .notEmpty()
+    .withMessage('Title is required')
+    .isLength({ max: 200 })
+    .withMessage('Title should not exceed 200 characters'),
+  body('startDate')
+    .notEmpty()
+    .withMessage('Start date is required')
+    .isDate()
+    .withMessage('Provide a valid date')
+    .custom((startDate: Date) => {
+      if (
+        new Date(startDate).setHours(0, 0, 0, 0) <
+        new Date().setHours(0, 0, 0, 0)
+      ) {
+        throw new Error('Start date should be greater than current date');
+      }
+      return true;
+    }),
+  body('endDate')
+    .notEmpty()
+    .withMessage('End date is required')
+    .isDate()
+    .withMessage('Provide a valid date')
+    .custom((endDate: Date, { req }) => {
+      if (new Date(endDate) <= new Date(req.body.startDate)) {
+        throw new Error('End date should be greater than start date');
+      }
+      return true;
+    }),
+  body('goal')
+    .notEmpty()
+    .withMessage('Goal is required')
+    .isLength({ max: 500 })
+    .withMessage('Goal should not exceed 500 characters')
+];
+
 export {
   projectIdValidator,
   createProjectValidator,
   requestToJoinValidator,
-  processJoinRequestValidator
+  processJoinRequestValidator,
+  createSprintValidator
 };

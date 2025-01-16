@@ -305,11 +305,18 @@ const deleteMemberFromProject: RequestHandler = async (
   }
 };
 
+const createSprint: RequestHandler = async (_, res, _1) => {
+  res.status(HttpStatus.CREATED).json({
+    message: 'Input validation passed, creating sprint'
+  });
+};
+
 export {
   createProject,
   getJoinRequests,
   requestToJoinProject,
   processJoinRequest,
   addMemberToProject,
-  deleteMemberFromProject
+  deleteMemberFromProject,
+  createSprint
 };

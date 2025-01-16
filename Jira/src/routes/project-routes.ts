@@ -4,7 +4,8 @@ import {
   projectIdValidator,
   createProjectValidator,
   requestToJoinValidator,
-  processJoinRequestValidator
+  processJoinRequestValidator,
+  createSprintValidator
 } from '../validators/project-validators';
 import { isProjectCreator } from '../middlewares/project-middlewares';
 import {
@@ -13,7 +14,8 @@ import {
   processJoinRequest,
   requestToJoinProject,
   addMemberToProject,
-  deleteMemberFromProject
+  deleteMemberFromProject,
+  createSprint
 } from '../controllers/project-controllers';
 
 const router = Router();
@@ -47,6 +49,15 @@ router
     projectIdValidator,
     isProjectCreator,
     deleteMemberFromProject
+  );
+router
+  .route('/:projectId/sprint')
+  .post(
+    isAuth,
+    projectIdValidator,
+    createSprintValidator,
+    isProjectCreator,
+    createSprint
   );
 
 export default router;
