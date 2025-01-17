@@ -9,6 +9,7 @@ import { Project, ProjectDocument } from '../models/Project';
 import { customRequest } from '../middlewares/is-auth';
 import { User, UserDocument } from '../models/User';
 import { sendNotification } from '../utils/helper';
+import { Sprint, SprintDocument } from '../models/Sprint';
 
 const createProject: RequestHandler = async (req: customRequest, res, next) => {
   if (!validationResult(req).isEmpty()) {
@@ -305,10 +306,49 @@ const deleteMemberFromProject: RequestHandler = async (
   }
 };
 
-const createSprint: RequestHandler = async (_, res, _1) => {
-  res.status(HttpStatus.CREATED).json({
-    message: 'Input validation passed, creating sprint'
-  });
+const createSprint: RequestHandler = async (req: customRequest, res, next) => {
+  const { title, startDate, endDate, goal } = req.body as {
+    title: string;
+    startDate: Date;
+    endDate: Date;
+    goal: string;
+  };
+
+  try {
+    const project = req.project as ProjectDocument;
+    const sprint = new Sprint({
+      title: title,
+      startDate: startDate,
+      endDate: endDate,
+      goal: goal,
+      project: project._id,
+      tasks: []
+    });
+    await sprint.save();
+    project.sprints.unshift(sprint._id as SprintDocument);
+    await project.save();
+    project.members.forEach(async member => {
+      if (member.toString() !== project.creator.toString()) {
+        await sendNotification(
+          `${req.email} created new sprint for the project ${project.title}`,
+          'SprintCreation',
+          member,
+          true
+        );
+      }
+    });
+    res.status(HttpStatus.CREATED).json({
+      message: 'Successfully created sprint',
+      sprint
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not create sprint currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
 };
 
 export {

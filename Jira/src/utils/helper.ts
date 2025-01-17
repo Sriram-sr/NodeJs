@@ -10,7 +10,7 @@ const sendNotification: (
   if (findUser) {
     user = await User.findById(userId);
   }
-  user?.notifications.push({
+  user?.notifications.unshift({
     category: notificationType,
     message: message,
     isRead: false,
