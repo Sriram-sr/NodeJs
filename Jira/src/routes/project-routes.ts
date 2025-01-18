@@ -15,12 +15,14 @@ import {
   requestToJoinProject,
   addMemberToProject,
   deleteMemberFromProject,
-  createSprint
+  createSprint,
+  getProject
 } from '../controllers/project-controllers';
 
 const router = Router();
 
 router.route('/').post(isAuth, createProjectValidator, createProject);
+router.route('/:projectId/').get(isAuth, getProject);
 router
   .route('/:projectId/request')
   .get(isAuth, projectIdValidator, isProjectCreator, getJoinRequests)

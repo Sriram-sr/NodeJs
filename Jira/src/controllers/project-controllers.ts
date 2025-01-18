@@ -46,6 +46,62 @@ const createProject: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
+const getProject: RequestHandler = async (req: customRequest, res, next) => {
+  const { projectId } = req.params as {
+    projectId: string;
+  };
+
+  try {
+    const project = await Project.findById(projectId)
+      .populate({
+        path: 'creator',
+        select: 'email'
+      })
+      .populate({
+        path: 'members',
+        select: 'email'
+      })
+      .populate({
+        path: 'joinRequests',
+        populate: {
+          path: 'requester',
+          select: 'email -_id'
+        }
+      })
+      .populate({
+        path: 'sprints',
+        select: 'title startDate endDate goal'
+      });
+    if (!project) {
+      return errorHandler('Project not found', HttpStatus.NOT_FOUND, next);
+    }
+    const projectMember = project.members.find(
+      member => member._id?.toString() === req.userId?.toString()
+    );
+    if (project.visibility === 'private' && !projectMember) {
+      return errorHandler(
+        'Cannot get private project if you are not member of it',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    project.members = project.members.slice(0, 3);
+    project.joinRequests = project.joinRequests.slice(0, 3);
+    project.sprints = project.sprints.slice(0, 3);
+    res.status(HttpStatus.OK).json({
+      message: 'Successfully fetched the project',
+      project
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get project currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
 const getJoinRequests: RequestHandler = async (
   req: customRequest,
   res,
@@ -353,6 +409,7 @@ const createSprint: RequestHandler = async (req: customRequest, res, next) => {
 
 export {
   createProject,
+  getProject,
   getJoinRequests,
   requestToJoinProject,
   processJoinRequest,
