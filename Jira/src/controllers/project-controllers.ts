@@ -70,7 +70,7 @@ const getProject: RequestHandler = async (req: customRequest, res, next) => {
       })
       .populate({
         path: 'sprints',
-        select: 'title startDate endDate goal'
+        select: 'title startDate endDate -_id'
       });
     if (!project) {
       return errorHandler('Project not found', HttpStatus.NOT_FOUND, next);

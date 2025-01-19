@@ -5,7 +5,6 @@ import { CommentDocument } from './Comment';
 import { ProjectDocument } from './Project';
 
 interface TaskDocument extends Document {
-  taskId: string;
   title: string;
   description: string;
   status: 'Todo' | 'InProgress' | 'InReview' | 'Done';
@@ -29,11 +28,6 @@ export interface TaskInput {
 
 const taskSchema = new Schema<TaskDocument>(
   {
-    taskId: {
-      type: String,
-      unique: true,
-      required: true
-    },
     title: {
       type: String,
       required: true
