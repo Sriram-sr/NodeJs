@@ -31,6 +31,16 @@ const createTask: RequestHandler = async (req: customRequest, res, next) => {
     if (!project) {
       return errorHandler('Project not found', HttpStatus.NOT_FOUND, next);
     }
+    const projectMember = project.members.find(
+      member => member.toString() === req.userId?.toString()
+    );
+    if (!projectMember) {
+      return errorHandler(
+        'Cannot create task if you are not a member of project',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
     if (project.status !== 'active') {
       return errorHandler(
         'Cannot create task for a inactive project',
