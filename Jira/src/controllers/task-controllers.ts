@@ -1,4 +1,5 @@
 import { RequestHandler } from 'express';
+import { Types } from 'mongoose';
 import { validationResult } from 'express-validator';
 import {
   errorHandler,
@@ -98,4 +99,41 @@ const createTask: RequestHandler = async (req: customRequest, res, next) => {
   }
 };
 
-export { createTask };
+const getTask: RequestHandler = async (req, res, next) => {
+  const { taskId } = req.params as { taskId: string };
+  if (!Types.ObjectId.isValid(taskId)) {
+    return errorHandler(
+      'Task Id is not a valid Mongo Id',
+      HttpStatus.UNPROCESSABLE_ENTITY,
+      next
+    );
+  }
+
+  try {
+    const task = await Task.findById(taskId)
+      .populate({
+        path: 'creator',
+        select: 'email -_id'
+      })
+      .populate({
+        path: 'assignee',
+        select: 'email -_id'
+      });
+    if (!task) {
+      return errorHandler('Task not found', HttpStatus.NOT_FOUND, next);
+    }
+    res.status(HttpStatus.OK).json({
+      message: 'Sucessfully fetched the task',
+      task
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not get task currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export { getTask, createTask };
