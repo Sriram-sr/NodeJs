@@ -10,7 +10,7 @@ import { Task, TaskDocument, TaskInput } from '../models/Task';
 import { Project } from '../models/Project';
 import { Sprint } from '../models/Sprint';
 import { customRequest } from '../middlewares/is-auth';
-import { User } from '../models/User';
+import { User, UserDocument } from '../models/User';
 import { sendNotification } from '../utils/helper';
 
 const createTask: RequestHandler = async (req: customRequest, res, next) => {
@@ -65,6 +65,7 @@ const createTask: RequestHandler = async (req: customRequest, res, next) => {
       dueDate: dueDate,
       creator: req.userId,
       sprint: sprint._id,
+      project: project._id,
       assignee: assignee,
       comments: []
     });
@@ -136,4 +137,64 @@ const getTask: RequestHandler = async (req, res, next) => {
   }
 };
 
-export { getTask, createTask };
+const assignTask: RequestHandler = async (req: customRequest, res, next) => {
+  const { assigneeId } = req.body as { assigneeId: string };
+  if (!Types.ObjectId.isValid(assigneeId)) {
+    return errorHandler(
+      'Assignee Id is not a valid Mongo Id',
+      HttpStatus.UNPROCESSABLE_ENTITY,
+      next
+    );
+  }
+  let notificationMessage: string;
+
+  try {
+    const project = await Project.findById(req.task?.project);
+    if (!project) {
+      return errorHandler(
+        'Project of this task is not found',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    const projectMember = project.members.find(
+      member => member.toString() === req.userId?.toString()
+    );
+    if (!projectMember) {
+      return errorHandler(
+        'Cannot assign task if you are not a member of project',
+        HttpStatus.FORBIDDEN,
+        next
+      );
+    }
+    const taskAssignee = await User.findById(assigneeId);
+    if (!taskAssignee) {
+      return errorHandler(
+        'Task assignee not found',
+        HttpStatus.NOT_FOUND,
+        next
+      );
+    }
+    req.task!.assignee = taskAssignee._id as UserDocument;
+    await req.task?.save();
+    if (req.userId?.toString() === taskAssignee._id?.toString()) {
+      notificationMessage = 'You have self assigned the task';
+    } else {
+      notificationMessage = `${req.email} assigned you a task`;
+    }
+    await sendNotification(notificationMessage, 'TaskAssignment', taskAssignee);
+    res.status(HttpStatus.OK).json({
+      message: 'Sucessfully assigned the task',
+      task: req.task
+    });
+  } catch (err) {
+    errorHandler(
+      'Something went wrong, could not assign the task currently',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      next,
+      err
+    );
+  }
+};
+
+export { getTask, createTask, assignTask };

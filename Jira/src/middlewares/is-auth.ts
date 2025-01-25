@@ -4,11 +4,13 @@ import { TokenExpiredError, verify } from 'jsonwebtoken';
 import { JWT_SECURE_KEY } from '../utils/constants';
 import { UserDocument } from '../models/User';
 import { ProjectDocument } from '../models/Project';
+import { TaskDocument } from '../models/Task';
 
 interface customRequest extends Request {
   userId?: UserDocument;
   email?: string;
   project?: ProjectDocument;
+  task?: TaskDocument;
 }
 
 const isAuthenticated: RequestHandler = (req: customRequest, _, next) => {

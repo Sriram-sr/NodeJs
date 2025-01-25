@@ -12,6 +12,7 @@ interface TaskDocument extends Document {
   dueDate?: Date;
   creator: UserDocument;
   sprint: SprintDocument;
+  project: ProjectDocument;
   assignee?: UserDocument;
   comments: Array<CommentDocument>;
 }
@@ -58,6 +59,11 @@ const taskSchema = new Schema<TaskDocument>(
     sprint: {
       type: Schema.Types.ObjectId,
       ref: 'Sprint',
+      required: true
+    },
+    project: {
+      type: Schema.Types.ObjectId,
+      ref: 'Project',
       required: true
     },
     assignee: {

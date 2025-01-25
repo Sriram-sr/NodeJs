@@ -1,4 +1,5 @@
-import { body, ValidationChain } from 'express-validator';
+import { body, param, ValidationChain } from 'express-validator';
+import { Task } from '../models/Task';
 
 const createTaskValidator: ValidationChain[] = [
   body('title')
@@ -44,4 +45,16 @@ const createTaskValidator: ValidationChain[] = [
     .withMessage('Provide valid Mongo Id for assignee')
 ];
 
-export { createTaskValidator };
+const taskIdValidator: ValidationChain = param('taskId')
+  .isMongoId()
+  .withMessage('Task Id is not a valid Mongo Id')
+  .custom(async (taskId: string, { req }) => {
+    const task = await Task.findById(taskId);
+    if (!task) {
+      throw new Error('Task not found with the task Id');
+    }
+    req.task = task;
+    return true;
+  });
+
+export { createTaskValidator, taskIdValidator };
