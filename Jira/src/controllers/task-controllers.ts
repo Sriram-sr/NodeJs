@@ -138,11 +138,21 @@ const getTask: RequestHandler = async (req, res, next) => {
 };
 
 const assignTask: RequestHandler = async (req: customRequest, res, next) => {
+  if (!validationResult(req).isEmpty()) {
+    return inputValidationHandler(validationResult(req).array(), next);
+  }
   const { assigneeId } = req.body as { assigneeId: string };
   if (!Types.ObjectId.isValid(assigneeId)) {
     return errorHandler(
       'Assignee Id is not a valid Mongo Id',
       HttpStatus.UNPROCESSABLE_ENTITY,
+      next
+    );
+  }
+  if (req.task?.assignee && req.task.assignee.toString() === assigneeId) {
+    return errorHandler(
+      'Task is already assigned to the same user',
+      HttpStatus.CONFLICT,
       next
     );
   }
